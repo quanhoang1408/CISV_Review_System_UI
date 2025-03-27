@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import Header from '../components/Header';
 import { 
   Container, Box, Typography, FormControl, 
   InputLabel, Select, MenuItem, Button, Paper
@@ -13,6 +14,13 @@ const AdminSelection = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Check if admin is already selected, redirect to checkin if so
+    const admin = localStorage.getItem('currentAdmin');
+    if (admin) {
+      navigate('/checkin');
+      return;
+    }
+
     const fetchAdmins = async () => {
       try {
         const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/users`);
@@ -23,7 +31,7 @@ const AdminSelection = () => {
     };
 
     fetchAdmins();
-  }, []);
+  }, [navigate]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -35,42 +43,45 @@ const AdminSelection = () => {
   };
 
   return (
-    <Container maxWidth="sm">
-      <Box sx={{ my: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <Paper elevation={3} sx={{ p: 4, width: '100%' }}>
-          <Typography variant="h4" component="h1" gutterBottom align="center">
-            Bạn là ai?
-          </Typography>
-          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
-            <FormControl fullWidth margin="normal">
-              <InputLabel id="admin-select-label">Chọn tên của bạn</InputLabel>
-              <Select
-                labelId="admin-select-label"
-                value={selectedAdmin}
-                label="Chọn tên của bạn"
-                onChange={(e) => setSelectedAdmin(e.target.value)}
-                required
+    <>
+      <Header title="CISV Meme System" showLogout={false} />
+      <Container maxWidth="sm">
+        <Box sx={{ my: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <Paper elevation={3} sx={{ p: 4, width: '100%' }}>
+            <Typography variant="h4" component="h1" gutterBottom align="center">
+              Bạn là ai?
+            </Typography>
+            <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
+              <FormControl fullWidth margin="normal">
+                <InputLabel id="admin-select-label">Chọn tên của bạn</InputLabel>
+                <Select
+                  labelId="admin-select-label"
+                  value={selectedAdmin}
+                  label="Chọn tên của bạn"
+                  onChange={(e) => setSelectedAdmin(e.target.value)}
+                  required
+                >
+                  {admins.map(admin => (
+                    <MenuItem key={admin._id} value={admin._id}>
+                      {admin.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Button 
+                type="submit" 
+                fullWidth 
+                variant="contained" 
+                sx={{ mt: 2 }}
+                disabled={!selectedAdmin}
               >
-                {admins.map(admin => (
-                  <MenuItem key={admin._id} value={admin._id}>
-                    {admin.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <Button 
-              type="submit" 
-              fullWidth 
-              variant="contained" 
-              sx={{ mt: 2 }}
-              disabled={!selectedAdmin}
-            >
-              Tiếp tục
-            </Button>
-          </Box>
-        </Paper>
-      </Box>
-    </Container>
+                Tiếp tục
+              </Button>
+            </Box>
+          </Paper>
+        </Box>
+      </Container>
+    </>
   );
 };
 
