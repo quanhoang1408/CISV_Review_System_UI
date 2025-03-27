@@ -171,7 +171,7 @@ const CheckInPage = () => {
         <Box sx={{ my: 4 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
             <Typography variant="h4" component="h1">
-              Check-in người tham gia
+              Check-in
             </Typography>
             <Button 
               component={Link} 
