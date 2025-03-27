@@ -171,9 +171,16 @@ const EvaluationPage = () => {
                       {selectedParticipant.name}
                     </Typography>
                     {selectedParticipant.checkInStatus ? (
-                      <Typography variant="body2" color="success.main">
-                        Đã check-in: {new Date(selectedParticipant.checkInTime).toLocaleString()}
-                      </Typography>
+                      <Box>
+                        <Typography variant="body2" color="success.main">
+                          Đã check-in: {new Date(selectedParticipant.checkInTime).toLocaleString()}
+                        </Typography>
+                        {selectedParticipant.checkedInBy && (
+                          <Typography variant="body2" color="text.secondary">
+                            Check-in bởi: {selectedParticipant.checkedInBy.name}
+                          </Typography>
+                        )}
+                      </Box>
                     ) : (
                       <Typography variant="body2" color="text.secondary">
                         Chưa check-in
@@ -254,6 +261,11 @@ const EvaluationPage = () => {
                       <Typography variant="body2" color={participant.checkInStatus ? "success.main" : "text.secondary"}>
                         {participant.checkInStatus ? "Đã check-in" : "Chưa check-in"}
                       </Typography>
+                      {participant.checkInStatus && participant.checkedInBy && (
+                        <Typography variant="caption" color="text.secondary">
+                          bởi {participant.checkedInBy.name}
+                        </Typography>
+                      )}
                     </CardContent>
                   </Card>
                 </Grid>

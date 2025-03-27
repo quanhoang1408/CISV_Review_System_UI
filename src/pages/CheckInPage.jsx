@@ -13,7 +13,7 @@ import {
 import { 
   PhotoCamera, 
   FileUpload, 
-  Cameraswitch // Thêm icon để chuyển đổi camera
+  Cameraswitch
 } from '@mui/icons-material';
 
 const CheckInPage = () => {
@@ -26,8 +26,7 @@ const CheckInPage = () => {
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
   const webcamRef = useRef(null);
-  // Thêm state để xác định camera đang sử dụng
-  const [facingMode, setFacingMode] = useState("user"); // "user" là camera trước, "environment" là camera sau
+  const [facingMode, setFacingMode] = useState("user");
 
   useEffect(() => {
     // Admin check is now handled by AuthWrapper
@@ -69,7 +68,6 @@ const CheckInPage = () => {
     }
   };
 
-  // Thêm hàm để chuyển đổi giữa camera trước và sau
   const toggleCamera = () => {
     setFacingMode(prevMode => prevMode === "user" ? "environment" : "user");
   };
@@ -122,17 +120,21 @@ const CheckInPage = () => {
         }
       }
       
+      // Lấy thông tin admin hiện tại
+      const currentAdmin = JSON.parse(localStorage.getItem('currentAdmin'));
+      
       // Update participant check-in status
-      await axios.put(`${process.env.REACT_APP_API_URL}/api/participants/${currentParticipant._id}/checkin`, {
+      const checkInResponse = await axios.put(`${process.env.REACT_APP_API_URL}/api/participants/${currentParticipant._id}/checkin`, {
         checkInStatus: true,
         checkInTime: new Date(),
-        checkInPhoto: photoUrl
+        checkInPhoto: photoUrl,
+        checkedInBy: currentAdmin._id // Thêm ID của admin đang thực hiện check-in
       });
       
-      // Update state with new check-in info
+      // Cập nhật state với thông tin check-in mới từ response
       setParticipants(participants.map(p => 
         p._id === currentParticipant._id 
-          ? { ...p, checkInStatus: true, checkInPhoto: photoUrl } 
+          ? checkInResponse.data // Sử dụng dữ liệu đã populated từ server
           : p
       ));
       
@@ -189,10 +191,15 @@ const CheckInPage = () => {
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <Typography variant="h6">{participant.name}</Typography>
                       {participant.checkInStatus ? (
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <Typography variant="body2" color="success.main" sx={{ mr: 1 }}>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                          <Typography variant="body2" color="success.main" sx={{ mb: 0.5 }}>
                             Đã check-in
                           </Typography>
+                          {participant.checkedInBy && (
+                            <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5 }}>
+                              bởi {participant.checkedInBy.name}
+                            </Typography>
+                          )}
                           <Avatar 
                             src={participant.checkInPhoto} 
                             alt={participant.name}
