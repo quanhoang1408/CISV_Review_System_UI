@@ -8,12 +8,16 @@ import {
   Container, Typography, Button, Box, Grid, Card, 
   CardContent, IconButton, Dialog, DialogTitle,
   DialogContent, DialogActions, Avatar, Tab, Tabs,
-  Input, CircularProgress, Snackbar, Alert
+  Input, CircularProgress, Snackbar, Alert,
+  TextField, InputAdornment // Thêm TextField và InputAdornment
 } from '@mui/material';
 import { 
   PhotoCamera, 
   FileUpload, 
-  Cameraswitch
+  Cameraswitch,
+  Search, // Thêm biểu tượng Search
+  Person, // Icon cho supporter
+  EmojiPeople // Icon cho leader
 } from '@mui/icons-material';
 
 const CheckInPage = () => {
@@ -27,6 +31,7 @@ const CheckInPage = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
   const webcamRef = useRef(null);
   const [facingMode, setFacingMode] = useState("user");
+  const [searchQuery, setSearchQuery] = useState(''); // Thêm state cho chức năng tìm kiếm
 
   useEffect(() => {
     // Admin check is now handled by AuthWrapper
@@ -42,6 +47,16 @@ const CheckInPage = () => {
 
     fetchParticipants();
   }, []);
+
+  // Hàm xử lý thay đổi tìm kiếm
+  const handleSearchChange = (event) => {
+    setSearchQuery(event.target.value);
+  };
+
+  // Lọc danh sách người tham gia theo tìm kiếm
+  const filteredParticipants = participants.filter(participant => 
+    participant.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const showSnackbar = (message, severity = 'info') => {
     setSnackbar({ open: true, message, severity });
@@ -183,13 +198,61 @@ const CheckInPage = () => {
             </Button>
           </Box>
           
+          {/* Thêm ô tìm kiếm */}
+          <Box sx={{ mb: 3 }}>
+            <TextField
+              fullWidth
+              placeholder="Tìm kiếm theo tên..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+              variant="outlined"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Box>
+          
           <Grid container spacing={3}>
-            {participants.map((participant) => (
+            {filteredParticipants.map((participant) => (
               <Grid item xs={12} sm={6} md={4} key={participant._id}>
-                <Card variant="outlined">
+                <Card 
+                  variant="outlined"
+                  sx={{ 
+                    borderLeft: 6, 
+                    borderColor: participant.type === 'leader' ? 'error.main' : 'primary.main',
+                    backgroundColor: participant.type === 'leader' ? 'rgba(255, 0, 0, 0.05)' : 'rgba(0, 0, 255, 0.05)'
+                  }}
+                >
                   <CardContent>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Typography variant="h6">{participant.name}</Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        {participant.type === 'leader' ? (
+                          <EmojiPeople color="error" sx={{ mr: 1 }} />
+                        ) : (
+                          <Person color="primary" sx={{ mr: 1 }} />
+                        )}
+                        <Box>
+                          <Typography variant="h6">{participant.name}</Typography>
+                          <Typography 
+                            variant="caption" 
+                            sx={{ 
+                              display: 'inline-block',
+                              bgcolor: participant.type === 'leader' ? 'error.light' : 'primary.light',
+                              color: 'white',
+                              px: 1,
+                              py: 0.2,
+                              borderRadius: 1,
+                              mt: 0.5
+                            }}
+                          >
+                            {participant.type === 'leader' ? 'Leader' : 'Supporter'}
+                          </Typography>
+                        </Box>
+                      </Box>
                       {participant.checkInStatus ? (
                         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                           <Typography variant="body2" color="success.main" sx={{ mb: 0.5 }}>
@@ -208,7 +271,7 @@ const CheckInPage = () => {
                         </Box>
                       ) : (
                         <IconButton 
-                          color="primary" 
+                          color={participant.type === 'leader' ? "error" : "primary"}
                           onClick={() => handleCameraClick(participant)}
                         >
                           <PhotoCamera />
@@ -219,6 +282,15 @@ const CheckInPage = () => {
                 </Card>
               </Grid>
             ))}
+            
+            {/* Hiển thị thông báo khi không tìm thấy kết quả */}
+            {filteredParticipants.length === 0 && (
+              <Box sx={{ width: '100%', textAlign: 'center', mt: 4, p: 2 }}>
+                <Typography variant="body1" color="text.secondary">
+                  Không tìm thấy người tham gia với từ khóa "{searchQuery}"
+                </Typography>
+              </Box>
+            )}
           </Grid>
 
           {/* Check-in Dialog */}

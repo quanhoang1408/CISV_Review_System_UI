@@ -7,9 +7,9 @@ import Header from '../components/Header';
 import {
   Container, Typography, Box, Grid, Card, CardContent,
   Button, Avatar, Paper, IconButton, Rating, Divider, 
-  CircularProgress, Snackbar, Alert
+  CircularProgress, Snackbar, Alert, TextField, InputAdornment
 } from '@mui/material';
-import { ArrowBack, Add } from '@mui/icons-material';
+import { ArrowBack, Add, Search, Person, EmojiPeople } from '@mui/icons-material';
 
 const EvaluationPage = () => {
   const [participants, setParticipants] = useState([]);
@@ -18,6 +18,7 @@ const EvaluationPage = () => {
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
+  const [searchQuery, setSearchQuery] = useState(''); // Thêm state cho chức năng tìm kiếm
   
   useEffect(() => {
     // Admin check is now handled by AuthWrapper
@@ -37,6 +38,16 @@ const EvaluationPage = () => {
 
     fetchParticipants();
   }, []);
+  
+  // Hàm xử lý thay đổi tìm kiếm
+  const handleSearchChange = (event) => {
+    setSearchQuery(event.target.value);
+  };
+
+  // Lọc danh sách người tham gia theo tìm kiếm
+  const filteredParticipants = participants.filter(participant => 
+    participant.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
   
   const showSnackbar = (message, severity = 'info') => {
     setSnackbar({ open: true, message, severity });
@@ -147,7 +158,7 @@ const EvaluationPage = () => {
             </Button>
           </Box>
           
-          {loading && (
+          {loading && !selectedParticipant && (
             <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
               <CircularProgress />
             </Box>
@@ -165,10 +176,45 @@ const EvaluationPage = () => {
             <Box>
               <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                  {renderAvatar(selectedParticipant, { width: 80, height: 80, mr: 2 })}
+                  <Box sx={{ position: 'relative', mr: 3 }}>
+                    {renderAvatar(selectedParticipant, { width: 80, height: 80 })}
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        bottom: -8,
+                        right: -8,
+                        backgroundColor: selectedParticipant.type === 'leader' ? 'error.main' : 'primary.main',
+                        borderRadius: '50%',
+                        width: 32,
+                        height: 32,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      {selectedParticipant.type === 'leader' ?
+                        <EmojiPeople sx={{ color: 'white', fontSize: 20 }} /> :
+                        <Person sx={{ color: 'white', fontSize: 20 }} />
+                      }
+                    </Box>
+                  </Box>
                   <Box>
                     <Typography variant="h5" component="h2">
                       {selectedParticipant.name}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        display: 'inline-block',
+                        bgcolor: selectedParticipant.type === 'leader' ? 'error.light' : 'primary.light',
+                        color: 'white',
+                        px: 1,
+                        py: 0.2,
+                        borderRadius: 1,
+                        mb: 1
+                      }}
+                    >
+                      {selectedParticipant.type === 'leader' ? 'Leader' : 'Supporter'}
                     </Typography>
                     {selectedParticipant.checkInStatus ? (
                       <Box>
@@ -199,7 +245,11 @@ const EvaluationPage = () => {
                   Thêm đánh giá
                 </Button>
                 
-                {evaluations.length > 0 ? (
+                {loading ? (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+                    <CircularProgress />
+                  </Box>
+                ) : evaluations.length > 0 ? (
                   <Box>
                     <Typography variant="h6" gutterBottom>
                       Các đánh giá hiện có:
@@ -242,35 +292,103 @@ const EvaluationPage = () => {
               </Paper>
             </Box>
           ) : !loading && participants.length > 0 ? (
-            <Grid container spacing={3}>
-              {participants.map(participant => (
-                <Grid item xs={6} sm={4} md={3} key={participant._id}>
-                  <Card 
-                    sx={{ 
-                      cursor: 'pointer', 
-                      transition: '0.3s', 
-                      '&:hover': { transform: 'translateY(-5px)', boxShadow: 3 } 
-                    }}
-                    onClick={() => handleParticipantClick(participant)}
-                  >
-                    <CardContent sx={{ textAlign: 'center' }}>
-                      {renderAvatar(participant)}
-                      <Typography variant="h6">
-                        {participant.name}
-                      </Typography>
-                      <Typography variant="body2" color={participant.checkInStatus ? "success.main" : "text.secondary"}>
-                        {participant.checkInStatus ? "Đã check-in" : "Chưa check-in"}
-                      </Typography>
-                      {participant.checkInStatus && participant.checkedInBy && (
-                        <Typography variant="caption" color="text.secondary">
-                          bởi {participant.checkedInBy.name}
+            <>
+              {/* Thêm ô tìm kiếm */}
+              <Box sx={{ mb: 3 }}>
+                <TextField
+                  fullWidth
+                  placeholder="Tìm kiếm theo tên..."
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  variant="outlined"
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Search />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Box>
+
+              <Grid container spacing={3}>
+                {filteredParticipants.map(participant => (
+                  <Grid item xs={6} sm={4} md={3} key={participant._id}>
+                    <Card 
+                      sx={{ 
+                        cursor: 'pointer', 
+                        transition: '0.3s', 
+                        '&:hover': { transform: 'translateY(-5px)', boxShadow: 3 },
+                        borderTop: 6,
+                        borderColor: participant.type === 'leader' ? 'error.main' : 'primary.main',
+                        backgroundColor: participant.type === 'leader' ? 'rgba(255, 0, 0, 0.05)' : 'rgba(0, 0, 255, 0.05)'
+                      }}
+                      onClick={() => handleParticipantClick(participant)}
+                    >
+                      <CardContent sx={{ textAlign: 'center' }}>
+                        <Box sx={{ position: 'relative' }}>
+                          {renderAvatar(participant)}
+                          <Box 
+                            sx={{ 
+                              position: 'absolute', 
+                              top: -5, 
+                              right: -5, 
+                              backgroundColor: participant.type === 'leader' ? 'error.main' : 'primary.main',
+                              borderRadius: '50%',
+                              width: 32,
+                              height: 32,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            {participant.type === 'leader' ? 
+                              <EmojiPeople sx={{ color: 'white', fontSize: 20 }} /> : 
+                              <Person sx={{ color: 'white', fontSize: 20 }} />
+                            }
+                          </Box>
+                        </Box>
+                        <Typography variant="h6">
+                          {participant.name}
                         </Typography>
-                      )}
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
+                        <Typography 
+                          variant="caption" 
+                          sx={{ 
+                            display: 'inline-block',
+                            bgcolor: participant.type === 'leader' ? 'error.light' : 'primary.light',
+                            color: 'white',
+                            px: 1,
+                            py: 0.2,
+                            borderRadius: 1,
+                            mt: 0.5,
+                            mb: 1
+                          }}
+                        >
+                          {participant.type === 'leader' ? 'Leader' : 'Supporter'}
+                        </Typography>
+                        <Typography variant="body2" color={participant.checkInStatus ? "success.main" : "text.secondary"}>
+                          {participant.checkInStatus ? "Đã check-in" : "Chưa check-in"}
+                        </Typography>
+                        {participant.checkInStatus && participant.checkedInBy && (
+                          <Typography variant="caption" color="text.secondary">
+                            bởi {participant.checkedInBy.name}
+                          </Typography>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+                
+                {/* Hiển thị thông báo khi không tìm thấy kết quả */}
+                {filteredParticipants.length === 0 && (
+                  <Box sx={{ width: '100%', textAlign: 'center', mt: 4, p: 2 }}>
+                    <Typography variant="body1" color="text.secondary">
+                      Không tìm thấy người tham gia với từ khóa "{searchQuery}"
+                    </Typography>
+                  </Box>
+                )}
+              </Grid>
+            </>
           ) : !loading && (
             <Box sx={{ textAlign: 'center', width: '100%', mt: 4 }}>
               <Typography variant="h6" color="text.secondary">
