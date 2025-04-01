@@ -1,87 +1,104 @@
 // src/components/Header.jsx
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
-  AppBar, Toolbar, Typography, Button, Box, 
-  IconButton, Menu, MenuItem, Avatar 
+  AppBar, 
+  Toolbar, 
+  Typography, 
+  Box, 
+  Button, 
+  Tab, 
+  Tabs,
+  Chip
 } from '@mui/material';
-import { AccountCircle, ExitToApp } from '@mui/icons-material';
+import { Logout, Person } from '@mui/icons-material';
 
 const Header = ({ title, showLogout = true }) => {
-  const [adminName, setAdminName] = useState('');
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const currentPath = location.pathname;
+  const [adminName, setAdminName] = useState('');
   
+  // Only show nav tabs on main application pages (not admin selection)
+  const showNavigation = !currentPath.includes('/admin-selection');
+  
+  // Set the active tab based on current path
+  const getTabValue = () => {
+    if (currentPath.includes('/checkin')) return 0;
+    if (currentPath.includes('/evaluation')) return 1;
+    return false; // No tab active if on another page
+  };
+  
+  // Load admin name from localStorage
   useEffect(() => {
-    const adminData = localStorage.getItem('currentAdmin');
-    if (adminData) {
-      const admin = JSON.parse(adminData);
-      setAdminName(admin.name);
-      setIsLoggedIn(true);
-    } else {
-      setIsLoggedIn(false);
+    if (showLogout) {
+      try {
+        const adminData = JSON.parse(localStorage.getItem('currentAdmin'));
+        if (adminData && adminData.name) {
+          setAdminName(adminData.name);
+        }
+      } catch (error) {
+        console.error('Error loading admin data:', error);
+      }
     }
-  }, []);
-  
-  const handleMenu = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
+  }, [showLogout]);
 
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-  
   const handleLogout = () => {
     localStorage.removeItem('currentAdmin');
     navigate('/');
   };
-  
+
   return (
-    <AppBar position="static" color="primary" elevation={0} sx={{ mb: 3 }}>
+    <AppBar position="static">
       <Toolbar>
         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
           {title}
         </Typography>
         
-        {isLoggedIn && showLogout && (
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Typography variant="body1" sx={{ mr: 2 }}>
-              Xin chào, {adminName}
-            </Typography>
-            
-            <IconButton
-              size="large"
-              aria-label="account menu"
-              aria-controls="menu-appbar"
-              aria-haspopup="true"
-              onClick={handleMenu}
-              color="inherit"
+        {showNavigation && (
+          <Box sx={{ mr: 2 }}>
+            <Tabs 
+              value={getTabValue()} 
+              textColor="inherit"
+              indicatorColor="secondary"
+              aria-label="navigation tabs"
             >
-              <AccountCircle />
-            </IconButton>
-            
-            <Menu
-              id="menu-appbar"
-              anchorEl={anchorEl}
-              anchorOrigin={{
-                vertical: 'bottom',
-                horizontal: 'right',
-              }}
-              keepMounted
-              transformOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              open={Boolean(anchorEl)}
-              onClose={handleClose}
-            >
-              <MenuItem onClick={handleLogout}>
-                <ExitToApp sx={{ mr: 1 }} />
-                Đăng xuất
-              </MenuItem>
-            </Menu>
+              <Tab 
+                label="Check-in" 
+                onClick={() => navigate('/checkin')}
+              />
+              <Tab 
+                label="Đánh giá" 
+                onClick={() => navigate('/evaluation')}
+              />
+            </Tabs>
           </Box>
+        )}
+        
+        {adminName && (
+          <Chip
+            icon={<Person />}
+            label={`Xin chào, ${adminName}`}
+            variant="outlined"
+            sx={{ 
+              color: 'white', 
+              borderColor: 'rgba(255,255,255,0.5)',
+              mr: 2,
+              '& .MuiChip-icon': {
+                color: 'white'
+              }
+            }}
+          />
+        )}
+        
+        {showLogout && (
+          <Button 
+            color="inherit"
+            startIcon={<Logout />}
+            onClick={handleLogout}
+          >
+            Đăng xuất
+          </Button>
         )}
       </Toolbar>
     </AppBar>

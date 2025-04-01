@@ -1,6 +1,5 @@
 // src/pages/CheckInPage.jsx
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
 import axios from 'axios';
 import Webcam from 'react-webcam';
 import Header from '../components/Header';
@@ -9,15 +8,15 @@ import {
   CardContent, IconButton, Dialog, DialogTitle,
   DialogContent, DialogActions, Avatar, Tab, Tabs,
   Input, CircularProgress, Snackbar, Alert,
-  TextField, InputAdornment // Thêm TextField và InputAdornment
+  TextField, InputAdornment
 } from '@mui/material';
 import { 
   PhotoCamera, 
   FileUpload, 
   Cameraswitch,
-  Search, // Thêm biểu tượng Search
-  Person, // Icon cho supporter
-  EmojiPeople // Icon cho leader
+  Search,
+  Person,
+  EmojiPeople
 } from '@mui/icons-material';
 
 const CheckInPage = () => {
@@ -31,7 +30,7 @@ const CheckInPage = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
   const webcamRef = useRef(null);
   const [facingMode, setFacingMode] = useState("user");
-  const [searchQuery, setSearchQuery] = useState(''); // Thêm state cho chức năng tìm kiếm
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     // Admin check is now handled by AuthWrapper
@@ -184,19 +183,9 @@ const CheckInPage = () => {
       <Header title="CISV Meme System" />
       <Container maxWidth="lg">
         <Box sx={{ my: 4 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-            <Typography variant="h4" component="h1">
-              Check-in
-            </Typography>
-            <Button 
-              component={Link} 
-              to="/evaluation" 
-              variant="contained" 
-              color="success"
-            >
-              Đến trang đánh giá
-            </Button>
-          </Box>
+          <Typography variant="h4" component="h1" sx={{ mb: 4 }}>
+            Check-in
+          </Typography>
           
           {/* Thêm ô tìm kiếm */}
           <Box sx={{ mb: 3 }}>

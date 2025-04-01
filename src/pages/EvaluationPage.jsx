@@ -1,6 +1,5 @@
 // src/pages/EvaluationPage.jsx
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import axios from 'axios';
 import EvaluationForm from '../components/EvaluationForm';
 import Header from '../components/Header';
@@ -144,19 +143,9 @@ const EvaluationPage = () => {
       <Header title="CISV Meme System" />
       <Container maxWidth="lg">
         <Box sx={{ my: 4 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-            <Typography variant="h4" component="h1">
-              Đánh giá người tham gia
-            </Typography>
-            <Button 
-              component={Link} 
-              to="/checkin" 
-              variant="contained" 
-              color="primary"
-            >
-              Quay lại trang Check-in
-            </Button>
-          </Box>
+          <Typography variant="h4" component="h1" sx={{ mb: 4 }}>
+            Đánh giá người tham gia
+          </Typography>
           
           {loading && !selectedParticipant && (
             <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
@@ -394,14 +383,6 @@ const EvaluationPage = () => {
               <Typography variant="h6" color="text.secondary">
                 Chưa có người tham gia nào.
               </Typography>
-              <Button 
-                component={Link}
-                to="/checkin"
-                variant="contained"
-                sx={{ mt: 2 }}
-              >
-                Đi đến trang Check-in
-              </Button>
             </Box>
           )}
         </Box>
