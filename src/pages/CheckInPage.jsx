@@ -8,7 +8,7 @@ import {
   CardContent, IconButton, Dialog, DialogTitle,
   DialogContent, DialogActions, Avatar, Tab, Tabs,
   Input, CircularProgress, Snackbar, Alert,
-  TextField, InputAdornment
+  TextField, InputAdornment, Tooltip
 } from '@mui/material';
 import { 
   PhotoCamera, 
@@ -31,6 +31,7 @@ const CheckInPage = () => {
   const webcamRef = useRef(null);
   const [facingMode, setFacingMode] = useState("user");
   const [searchQuery, setSearchQuery] = useState('');
+  const [isRecheckin, setIsRecheckin] = useState(false);
 
   useEffect(() => {
     // Admin check is now handled by AuthWrapper
@@ -65,11 +66,12 @@ const CheckInPage = () => {
     setSnackbar({ ...snackbar, open: false });
   };
 
-  const handleCameraClick = (participant) => {
+  const handleCameraClick = (participant, isRecheckin = false) => {
     setCurrentParticipant(participant);
     setShowDialog(true);
     setTabValue(0); // Default to camera tab
     setSelectedFile(null);
+    setIsRecheckin(isRecheckin);
   };
 
   const handleTabChange = (event, newValue) => {
@@ -152,10 +154,12 @@ const CheckInPage = () => {
           : p
       ));
       
-      showSnackbar(`Đã check-in thành công cho ${currentParticipant.name}`, 'success');
+      const actionMessage = isRecheckin ? 'cập nhật check-in' : 'check-in';
+      showSnackbar(`Đã ${actionMessage} thành công cho ${currentParticipant.name}`, 'success');
       setShowDialog(false);
       setCurrentParticipant(null);
       setSelectedFile(null);
+      setIsRecheckin(false);
     } catch (error) {
       console.error('Error during check-in:', error);
       let errorMessage = 'Có lỗi xảy ra khi check-in';
@@ -176,6 +180,7 @@ const CheckInPage = () => {
     setShowDialog(false);
     setCurrentParticipant(null);
     setSelectedFile(null);
+    setIsRecheckin(false);
   };
 
   return (
@@ -242,30 +247,43 @@ const CheckInPage = () => {
                           </Typography>
                         </Box>
                       </Box>
-                      {participant.checkInStatus ? (
-                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          <Typography variant="body2" color="success.main" sx={{ mb: 0.5 }}>
-                            Đã check-in
-                          </Typography>
-                          {participant.checkedInBy && (
-                            <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5 }}>
-                              bởi {participant.checkedInBy.name}
+                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        {participant.checkInStatus ? (
+                          <>
+                            <Typography variant="body2" color="success.main" sx={{ mb: 0.5 }}>
+                              Đã check-in
                             </Typography>
-                          )}
-                          <Avatar 
-                            src={participant.checkInPhoto} 
-                            alt={participant.name}
-                            sx={{ width: 40, height: 40 }}
-                          />
-                        </Box>
-                      ) : (
-                        <IconButton 
-                          color={participant.type === 'leader' ? "error" : "primary"}
-                          onClick={() => handleCameraClick(participant)}
-                        >
-                          <PhotoCamera />
-                        </IconButton>
-                      )}
+                            {participant.checkedInBy && (
+                              <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5 }}>
+                                bởi {participant.checkedInBy.name}
+                              </Typography>
+                            )}
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                              <Avatar 
+                                src={participant.checkInPhoto} 
+                                alt={participant.name}
+                                sx={{ width: 40, height: 40, mr: 1 }}
+                              />
+                              <Tooltip title="Cập nhật ảnh check-in">
+                                <IconButton 
+                                  size="small"
+                                  color={participant.type === 'leader' ? "error" : "primary"}
+                                  onClick={() => handleCameraClick(participant, true)}
+                                >
+                                  <PhotoCamera />
+                                </IconButton>
+                              </Tooltip>
+                            </Box>
+                          </>
+                        ) : (
+                          <IconButton 
+                            color={participant.type === 'leader' ? "error" : "primary"}
+                            onClick={() => handleCameraClick(participant, false)}
+                          >
+                            <PhotoCamera />
+                          </IconButton>
+                        )}
+                      </Box>
                     </Box>
                   </CardContent>
                 </Card>
@@ -291,7 +309,7 @@ const CheckInPage = () => {
             disableEscapeKeyDown={loading}
           >
             <DialogTitle>
-              Check-in: {currentParticipant?.name}
+              {isRecheckin ? 'Cập nhật check-in: ' : 'Check-in: '}{currentParticipant?.name}
             </DialogTitle>
             <DialogContent>
               <Tabs value={tabValue} onChange={handleTabChange} centered sx={{ mb: 2 }}>

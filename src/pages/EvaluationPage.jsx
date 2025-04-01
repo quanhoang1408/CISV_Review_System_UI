@@ -6,7 +6,8 @@ import Header from '../components/Header';
 import {
   Container, Typography, Box, Grid, Card, CardContent,
   Button, Avatar, Paper, IconButton, Rating, Divider, 
-  CircularProgress, Snackbar, Alert, TextField, InputAdornment
+  CircularProgress, Snackbar, Alert, TextField, InputAdornment,
+  Chip
 } from '@mui/material';
 import { ArrowBack, Add, Search, Person, EmojiPeople } from '@mui/icons-material';
 
@@ -248,20 +249,32 @@ const EvaluationPage = () => {
                         <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                           Đánh giá bởi: {evaluation.evaluatorId?.name || 'Unknown'} - {new Date(evaluation.createdAt).toLocaleString()}
                         </Typography>
-                        {evaluation.criteria.map((criterion, index) => (
-                          <Box key={index} sx={{ mb: 1, mt: 1 }}>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <Typography variant="subtitle1" fontWeight="medium">
-                                {criterion.name}:
+                        
+                        {/* Lọc và chỉ hiển thị những tiêu chí có nhận xét (evidence) */}
+                        {evaluation.criteria
+                          .filter(criterion => criterion.evidence && criterion.evidence.trim() !== '')
+                          .map((criterion, index, filteredArray) => (
+                            <Box key={index} sx={{ mb: 1, mt: 1 }}>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Typography variant="subtitle1" fontWeight="medium">
+                                  {criterion.name}:
+                                </Typography>
+                                <Rating value={criterion.score} readOnly size="small" />
+                              </Box>
+                              <Typography variant="body2" sx={{ mt: 0.5 }}>
+                                {criterion.evidence}
                               </Typography>
-                              <Rating value={criterion.score} readOnly size="small" />
+                              {index < filteredArray.length - 1 && <Divider sx={{ my: 1 }} />}
                             </Box>
-                            <Typography variant="body2" sx={{ mt: 0.5 }}>
-                              {criterion.evidence}
-                            </Typography>
-                            {index < evaluation.criteria.length - 1 && <Divider sx={{ my: 1 }} />}
-                          </Box>
-                        ))}
+                          ))
+                        }
+                        
+                        {/* Hiển thị thông báo nếu không có tiêu chí nào có evidence */}
+                        {evaluation.criteria.filter(criterion => criterion.evidence && criterion.evidence.trim() !== '').length === 0 && (
+                          <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', my: 1 }}>
+                            Không có nhận xét chi tiết nào.
+                          </Typography>
+                        )}
                       </Paper>
                     ))}
                   </Box>
