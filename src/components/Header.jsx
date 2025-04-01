@@ -9,15 +9,33 @@ import {
   Button, 
   Tab, 
   Tabs,
-  Chip
+  Chip,
+  IconButton,
+  Menu,
+  MenuItem,
+  Divider,
+  useMediaQuery,
+  useTheme
 } from '@mui/material';
-import { Logout, Person } from '@mui/icons-material';
+import { 
+  Logout, 
+  Person, 
+  Menu as MenuIcon,
+  Home as HomeIcon,
+  Assessment
+} from '@mui/icons-material';
 
 const Header = ({ title, showLogout = true }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const currentPath = location.pathname;
   const [adminName, setAdminName] = useState('');
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  
+  // Menu state
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
   
   // Only show nav tabs on main application pages (not admin selection)
   const showNavigation = !currentPath.includes('/admin-selection');
@@ -46,16 +64,41 @@ const Header = ({ title, showLogout = true }) => {
   const handleLogout = () => {
     localStorage.removeItem('currentAdmin');
     navigate('/');
+    handleMenuClose();
+  };
+  
+  const handleMenuOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+  
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+  
+  const handleNavigate = (path) => {
+    navigate(path);
+    handleMenuClose();
   };
 
   return (
     <AppBar position="static">
       <Toolbar>
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+        <Typography 
+          variant="h6" 
+          component="div" 
+          sx={{ 
+            flexGrow: 1,
+            fontSize: isMobile ? '1.1rem' : '1.25rem',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
+          }}
+        >
           {title}
         </Typography>
         
-        {showNavigation && (
+        {/* Desktop Navigation */}
+        {showNavigation && !isMobile && (
           <Box sx={{ mr: 2 }}>
             <Tabs 
               value={getTabValue()} 
@@ -75,7 +118,8 @@ const Header = ({ title, showLogout = true }) => {
           </Box>
         )}
         
-        {adminName && (
+        {/* Desktop User Greeting */}
+        {adminName && !isMobile && (
           <Chip
             icon={<Person />}
             label={`Xin chào, ${adminName}`}
@@ -91,7 +135,8 @@ const Header = ({ title, showLogout = true }) => {
           />
         )}
         
-        {showLogout && (
+        {/* Desktop Logout Button */}
+        {showLogout && !isMobile && (
           <Button 
             color="inherit"
             startIcon={<Logout />}
@@ -100,6 +145,67 @@ const Header = ({ title, showLogout = true }) => {
             Đăng xuất
           </Button>
         )}
+        
+        {/* Mobile Menu Button */}
+        {isMobile && showNavigation && (
+          <IconButton
+            color="inherit"
+            edge="end"
+            onClick={handleMenuOpen}
+            sx={{ ml: 1 }}
+          >
+            <MenuIcon />
+          </IconButton>
+        )}
+        
+        {/* Mobile Menu */}
+        <Menu
+          id="mobile-menu"
+          anchorEl={anchorEl}
+          open={open}
+          onClose={handleMenuClose}
+          sx={{ mt: 1 }}
+        >
+          {/* User Info in Mobile Menu */}
+          {adminName && (
+            <Box sx={{ px: 2, py: 1, display: 'flex', alignItems: 'center' }}>
+              <Person sx={{ mr: 1, color: 'primary.main' }} />
+              <Typography variant="body1" fontWeight="medium">
+                {adminName}
+              </Typography>
+            </Box>
+          )}
+          
+          {showNavigation && (
+            <>
+              <Divider />
+              <MenuItem 
+                onClick={() => handleNavigate('/checkin')}
+                selected={currentPath.includes('/checkin')}
+              >
+                <HomeIcon sx={{ mr: 1 }} />
+                Check-in
+              </MenuItem>
+              <MenuItem 
+                onClick={() => handleNavigate('/evaluation')}
+                selected={currentPath.includes('/evaluation')}
+              >
+                <Assessment sx={{ mr: 1 }} />
+                Đánh giá
+              </MenuItem>
+            </>
+          )}
+          
+          {showLogout && (
+            <>
+              <Divider />
+              <MenuItem onClick={handleLogout}>
+                <Logout sx={{ mr: 1 }} />
+                Đăng xuất
+              </MenuItem>
+            </>
+          )}
+        </Menu>
       </Toolbar>
     </AppBar>
   );
