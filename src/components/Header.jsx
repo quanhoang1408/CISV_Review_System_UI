@@ -22,7 +22,9 @@ import {
   Person, 
   Menu as MenuIcon,
   Home as HomeIcon,
-  Assessment
+  Assessment,
+  EmojiPeople,
+  Leaderboard
 } from '@mui/icons-material';
 
 const Header = ({ title, showLogout = true }) => {
@@ -44,6 +46,7 @@ const Header = ({ title, showLogout = true }) => {
   const getTabValue = () => {
     if (currentPath.includes('/checkin')) return 0;
     if (currentPath.includes('/evaluation')) return 1;
+    if (currentPath.includes('/supporters')) return 2;
     return false; // No tab active if on another page
   };
   
@@ -113,6 +116,10 @@ const Header = ({ title, showLogout = true }) => {
               <Tab 
                 label="Đánh giá" 
                 onClick={() => navigate('/evaluation')}
+              />
+              <Tab 
+                label="Xếp hạng Supporter" 
+                onClick={() => navigate('/supporters')}
               />
             </Tabs>
           </Box>
@@ -192,6 +199,13 @@ const Header = ({ title, showLogout = true }) => {
               >
                 <Assessment sx={{ mr: 1 }} />
                 Đánh giá
+              </MenuItem>
+              <MenuItem 
+                onClick={() => handleNavigate('/supporters')}
+                selected={currentPath.includes('/supporters')}
+              >
+                <Leaderboard sx={{ mr: 1 }} />
+                Xếp hạng Supporter
               </MenuItem>
             </>
           )}
