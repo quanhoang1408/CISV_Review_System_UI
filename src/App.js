@@ -1,35 +1,77 @@
 // src/App.js
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { CssBaseline } from '@mui/material';
+
+// Pages
 import AdminSelection from './pages/AdminSelection';
 import CheckInPage from './pages/CheckInPage';
 import EvaluationPage from './pages/EvaluationPage';
+import SupporterRankingPage from './pages/SupporterRankingPage';
+
+// Components
 import AuthWrapper from './components/AuthWrapper';
+
+// Theme configuration
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#1976d2',
+    },
+    secondary: {
+      main: '#f50057',
+    },
+  },
+  typography: {
+    fontFamily: [
+      'Roboto',
+      'Arial',
+      'sans-serif',
+    ].join(','),
+  },
+});
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<AdminSelection />} />
-        <Route 
-          path="/checkin" 
-          element={
-            <AuthWrapper>
-              <CheckInPage />
-            </AuthWrapper>
-          } 
-        />
-        <Route 
-          path="/evaluation" 
-          element={
-            <AuthWrapper>
-              <EvaluationPage />
-            </AuthWrapper>
-          } 
-        />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Router>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Router>
+        <Routes>
+          {/* Public routes */}
+          <Route path="/" element={<AdminSelection />} />
+          
+          {/* Protected routes - require admin authentication */}
+          <Route 
+            path="/checkin" 
+            element={
+              <AuthWrapper>
+                <CheckInPage />
+              </AuthWrapper>
+            } 
+          />
+          <Route 
+            path="/evaluation" 
+            element={
+              <AuthWrapper>
+                <EvaluationPage />
+              </AuthWrapper>
+            } 
+          />
+          <Route 
+            path="/supporters" 
+            element={
+              <AuthWrapper>
+                <SupporterRankingPage />
+              </AuthWrapper>
+            } 
+          />
+          
+          {/* Redirect any unknown routes to home */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Router>
+    </ThemeProvider>
   );
 }
 

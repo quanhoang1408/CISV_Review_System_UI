@@ -8,6 +8,7 @@ import {
   Button, Avatar, Paper, IconButton, Rating, Divider, 
   CircularProgress, Snackbar, Alert, TextField, InputAdornment,
   Chip, Modal, Backdrop
+  Chip, Dialog, DialogContent, DialogTitle
 } from '@mui/material';
 import { ArrowBack, Add, Search, Person, EmojiPeople, Close } from '@mui/icons-material';
 
@@ -24,6 +25,8 @@ const EvaluationPage = () => {
     imageUrl: '',
     name: ''
   });
+  const [searchQuery, setSearchQuery] = useState(''); // Thêm state cho chức năng tìm kiếm
+  const [imageDialog, setImageDialog] = useState({ open: false, imageUrl: '', name: '' });
   
   useEffect(() => {
     // Admin check is now handled by AuthWrapper
@@ -113,6 +116,21 @@ const EvaluationPage = () => {
     setShowForm(false);
   };
 
+  // Image dialog handlers
+  const handleImageClick = (participant) => {
+    if (participant.checkInStatus && participant.checkInPhoto) {
+      setImageDialog({
+        open: true,
+        imageUrl: participant.checkInPhoto,
+        name: participant.name
+      });
+    }
+  };
+
+  const handleCloseImageDialog = () => {
+    setImageDialog({ open: false, imageUrl: '', name: '' });
+  };
+
   // Xử lý mở modal khi click vào ảnh
   const handleOpenImageModal = (e, participant) => {
     // Ngăn sự kiện lan truyền tới card
@@ -155,6 +173,17 @@ const EvaluationPage = () => {
             } : {}
           }}
           onClick={clickable ? (e) => handleOpenImageModal(e, participant) : null}
+          sx={{ 
+            ...size, 
+            mx: 'auto', 
+            mb: 2,
+            cursor: 'pointer',
+            '&:hover': { 
+              boxShadow: 3,
+              transform: 'scale(1.05)'
+            }
+          }}
+          // We remove the onClick here since we handle it in the parent component
           onError={(e) => {
             console.error(`Error loading image for ${participant.name}:`, e);
             // Replace with initial on error
@@ -366,7 +395,14 @@ const EvaluationPage = () => {
                     >
                       <CardContent sx={{ textAlign: 'center' }}>
                         <Box sx={{ position: 'relative' }}>
-                          {renderAvatar(participant)}
+                          <Box onClick={(e) => {
+                            e.stopPropagation(); // Prevent card click when avatar is clicked
+                            if (participant.checkInStatus && participant.checkInPhoto) {
+                              handleImageClick(participant);
+                            }
+                          }}>
+                            {renderAvatar(participant)}
+                          </Box>
                           <Box 
                             sx={{ 
                               position: 'absolute', 
@@ -436,6 +472,37 @@ const EvaluationPage = () => {
             </Box>
           )}
         </Box>
+        
+        {/* Image Dialog */}
+        <Dialog
+          open={imageDialog.open}
+          onClose={handleCloseImageDialog}
+          maxWidth="md"
+          fullWidth
+        >
+          <DialogTitle>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography variant="h6">{imageDialog.name}</Typography>
+              <IconButton onClick={handleCloseImageDialog}>
+                <Close />
+              </IconButton>
+            </Box>
+          </DialogTitle>
+          <DialogContent>
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+              <img 
+                src={imageDialog.imageUrl} 
+                alt={imageDialog.name}
+                style={{ maxWidth: '100%', maxHeight: '70vh' }}
+                onError={(e) => {
+                  console.error(`Error loading full image:`, e);
+                  e.target.src = '';
+                  e.target.alt = 'Không thể tải ảnh';
+                }}
+              />
+            </Box>
+          </DialogContent>
+        </Dialog>
         
         {/* Snackbar for notifications */}
         <Snackbar 
