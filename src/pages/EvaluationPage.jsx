@@ -7,7 +7,6 @@ import {
   Container, Typography, Box, Grid, Card, CardContent,
   Button, Avatar, Paper, IconButton, Rating, Divider, 
   CircularProgress, Snackbar, Alert, TextField, InputAdornment,
-  Chip, Modal, Backdrop
   Chip, Dialog, DialogContent, DialogTitle
 } from '@mui/material';
 import { ArrowBack, Add, Search, Person, EmojiPeople, Close } from '@mui/icons-material';
@@ -20,12 +19,6 @@ const EvaluationPage = () => {
   const [loading, setLoading] = useState(true);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
   const [searchQuery, setSearchQuery] = useState('');
-  const [imageModal, setImageModal] = useState({
-    open: false,
-    imageUrl: '',
-    name: ''
-  });
-  const [searchQuery, setSearchQuery] = useState(''); // Thêm state cho chức năng tìm kiếm
   const [imageDialog, setImageDialog] = useState({ open: false, imageUrl: '', name: '' });
   
   useEffect(() => {
@@ -131,30 +124,8 @@ const EvaluationPage = () => {
     setImageDialog({ open: false, imageUrl: '', name: '' });
   };
 
-  // Xử lý mở modal khi click vào ảnh
-  const handleOpenImageModal = (e, participant) => {
-    // Ngăn sự kiện lan truyền tới card
-    e.stopPropagation();
-    
-    if (participant.checkInStatus && participant.checkInPhoto) {
-      setImageModal({
-        open: true,
-        imageUrl: participant.checkInPhoto,
-        name: participant.name
-      });
-    }
-  };
-
-  // Xử lý đóng modal
-  const handleCloseImageModal = () => {
-    setImageModal({
-      ...imageModal,
-      open: false
-    });
-  };
-
   // Helper function to render avatar with error handling
-  const renderAvatar = (participant, size = { width: 100, height: 100 }, clickable = true) => {
+  const renderAvatar = (participant, size = { width: 100, height: 100 }) => {
     console.log(`Rendering avatar for ${participant.name}, checkInStatus: ${participant.checkInStatus}, photo URL: ${participant.checkInPhoto}`);
     
     if (participant.checkInStatus && participant.checkInPhoto) {
@@ -165,17 +136,6 @@ const EvaluationPage = () => {
           sx={{ 
             ...size, 
             mx: 'auto', 
-            mb: 2, 
-            cursor: clickable ? 'pointer' : 'default',
-            '&:hover': clickable ? { 
-              transform: 'scale(1.05)',
-              boxShadow: '0 0 8px rgba(0,0,0,0.2)'
-            } : {}
-          }}
-          onClick={clickable ? (e) => handleOpenImageModal(e, participant) : null}
-          sx={{ 
-            ...size, 
-            mx: 'auto', 
             mb: 2,
             cursor: 'pointer',
             '&:hover': { 
@@ -183,7 +143,7 @@ const EvaluationPage = () => {
               transform: 'scale(1.05)'
             }
           }}
-          // We remove the onClick here since we handle it in the parent component
+          // We handle click in the parent component
           onError={(e) => {
             console.error(`Error loading image for ${participant.name}:`, e);
             // Replace with initial on error
@@ -233,7 +193,13 @@ const EvaluationPage = () => {
               <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                   <Box sx={{ position: 'relative', mr: 3 }}>
-                    {renderAvatar(selectedParticipant, { width: 80, height: 80 })}
+                    <Box onClick={() => {
+                      if (selectedParticipant.checkInStatus && selectedParticipant.checkInPhoto) {
+                        handleImageClick(selectedParticipant);
+                      }
+                    }}>
+                      {renderAvatar(selectedParticipant, { width: 80, height: 80 })}
+                    </Box>
                     <Box
                       sx={{
                         position: 'absolute',
@@ -520,77 +486,6 @@ const EvaluationPage = () => {
             {snackbar.message}
           </Alert>
         </Snackbar>
-
-        {/* Modal hiển thị ảnh khi click vào */}
-        <Modal
-          open={imageModal.open}
-          onClose={handleCloseImageModal}
-          closeAfterTransition
-          BackdropComponent={Backdrop}
-          BackdropProps={{
-            timeout: 500,
-          }}
-        >
-          <Box sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: '95%', 
-            height: '95%',
-            maxWidth: '1200px',  
-            maxHeight: '95vh',
-            bgcolor: 'background.paper',
-            borderRadius: 2,
-            boxShadow: 24,
-            p: 2,
-            outline: 'none',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center'
-          }}>
-            <Box sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              width: '100%',
-              mb: 2
-            }}>
-              <Typography variant="h6" component="h2">
-                {imageModal.name}
-              </Typography>
-              <IconButton onClick={handleCloseImageModal} size="small">
-                <Close />
-              </IconButton>
-            </Box>
-            
-            <Box sx={{
-              width: '100%',
-              height: 'calc(100% - 48px)',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              overflow: 'hidden'
-            }}>
-              <img 
-                src={imageModal.imageUrl} 
-                alt={imageModal.name}
-                style={{ 
-                  width: 'auto',
-                  height: 'auto',
-                  maxWidth: '85%',
-                  maxHeight: '85%',
-                  objectFit: 'contain'
-                }}
-                onError={(e) => {
-                  console.error(`Error loading modal image:`, e);
-                  e.target.src = '';
-                  e.target.alt = 'Không thể tải hình ảnh';
-                }}
-              />
-            </Box>
-          </Box>
-        </Modal>
       </Container>
     </>
   );
