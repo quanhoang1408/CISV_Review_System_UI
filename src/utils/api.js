@@ -123,4 +123,14 @@ export const deleteCampAssignment = async (participantId) => {
   }
 };
 
+export const updateAssignmentOrder = async (assignments) => {
+  try {
+    const response = await api.post('/api/camp-assignments/order', { assignments });
+    return response.data;
+  } catch (error) {
+    console.error('Error updating assignment order:', error);
+    throw error;
+  }
+};
+
 export default api;
