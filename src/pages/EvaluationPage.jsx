@@ -18,7 +18,7 @@ const EvaluationPage = () => {
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
-  const [searchQuery, setSearchQuery] = useState(''); // Thêm state cho chức năng tìm kiếm
+  const [searchQuery, setSearchQuery] = useState('');
   const [imageDialog, setImageDialog] = useState({ open: false, imageUrl: '', name: '' });
   
   useEffect(() => {
@@ -143,7 +143,7 @@ const EvaluationPage = () => {
               transform: 'scale(1.05)'
             }
           }}
-          // We remove the onClick here since we handle it in the parent component
+          // We handle click in the parent component
           onError={(e) => {
             console.error(`Error loading image for ${participant.name}:`, e);
             // Replace with initial on error
@@ -193,7 +193,13 @@ const EvaluationPage = () => {
               <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                   <Box sx={{ position: 'relative', mr: 3 }}>
-                    {renderAvatar(selectedParticipant, { width: 80, height: 80 })}
+                    <Box onClick={() => {
+                      if (selectedParticipant.checkInStatus && selectedParticipant.checkInPhoto) {
+                        handleImageClick(selectedParticipant);
+                      }
+                    }}>
+                      {renderAvatar(selectedParticipant, { width: 80, height: 80 })}
+                    </Box>
                     <Box
                       sx={{
                         position: 'absolute',
