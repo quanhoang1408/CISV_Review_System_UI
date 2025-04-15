@@ -1,4 +1,4 @@
-// src/utils/api.js
+// src/utils/api.js - thêm các hàm mới
 import axios from 'axios';
 
 const API_URL = process.env.REACT_APP_API_URL;
@@ -14,7 +14,6 @@ const api = axios.create({
 export const fetchUsers = async () => {
   try {
     const response = await api.get('/api/users');
-    console
     return response.data;
   } catch (error) {
     console.error('Error fetching users:', error);
@@ -62,7 +61,7 @@ export const uploadPhotoFile = async (file) => {
     const response = await axios.post(
       `${API_URL}/api/upload-photo/file`, 
       formData,
-      // Important: Don't set Content-Type, let the browser set it automatically with boundary
+      // Important: Don't set Content-Type header manually, let browser set it automatically with boundary
       { headers: {} }
     );
     
@@ -89,6 +88,37 @@ export const createEvaluation = async (data) => {
     return response.data;
   } catch (error) {
     console.error('Error creating evaluation:', error);
+    throw error;
+  }
+};
+
+// Thêm các hàm mới cho phân công trại
+export const fetchCampAssignments = async () => {
+  try {
+    const response = await api.get('/api/camp-assignments');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching camp assignments:', error);
+    throw error;
+  }
+};
+
+export const updateCampAssignment = async (data) => {
+  try {
+    const response = await api.post('/api/camp-assignments', data);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating camp assignment:', error);
+    throw error;
+  }
+};
+
+export const deleteCampAssignment = async (participantId) => {
+  try {
+    const response = await api.delete(`/api/camp-assignments/${participantId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting camp assignment:', error);
     throw error;
   }
 };

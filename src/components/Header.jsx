@@ -24,7 +24,8 @@ import {
   Home as HomeIcon,
   Assessment,
   EmojiPeople,
-  Leaderboard
+  Leaderboard,
+  Cottage
 } from '@mui/icons-material';
 
 const Header = ({ title, showLogout = true }) => {
@@ -47,6 +48,7 @@ const Header = ({ title, showLogout = true }) => {
     if (currentPath.includes('/checkin')) return 0;
     if (currentPath.includes('/evaluation')) return 1;
     if (currentPath.includes('/supporters')) return 2;
+    if (currentPath.includes('/camps')) return 3; // Tab phân trại
     return false; // No tab active if on another page
   };
   
@@ -121,6 +123,10 @@ const Header = ({ title, showLogout = true }) => {
                 label="Xếp hạng Supporter" 
                 onClick={() => navigate('/supporters')}
               />
+              <Tab 
+                label="Phân trại" 
+                onClick={() => navigate('/camps')}
+              />
             </Tabs>
           </Box>
         )}
@@ -165,7 +171,7 @@ const Header = ({ title, showLogout = true }) => {
           </IconButton>
         )}
         
-        {/* Mobile Menu */}
+                  {/* Mobile Menu */}
         <Menu
           id="mobile-menu"
           anchorEl={anchorEl}
@@ -183,41 +189,57 @@ const Header = ({ title, showLogout = true }) => {
             </Box>
           )}
           
+          {/* Navigation Items */}
+          {showNavigation && <Divider />}
+          
           {showNavigation && (
-            <>
-              <Divider />
-              <MenuItem 
-                onClick={() => handleNavigate('/checkin')}
-                selected={currentPath.includes('/checkin')}
-              >
-                <HomeIcon sx={{ mr: 1 }} />
-                Check-in
-              </MenuItem>
-              <MenuItem 
-                onClick={() => handleNavigate('/evaluation')}
-                selected={currentPath.includes('/evaluation')}
-              >
-                <Assessment sx={{ mr: 1 }} />
-                Đánh giá
-              </MenuItem>
-              <MenuItem 
-                onClick={() => handleNavigate('/supporters')}
-                selected={currentPath.includes('/supporters')}
-              >
-                <Leaderboard sx={{ mr: 1 }} />
-                Xếp hạng Supporter
-              </MenuItem>
-            </>
+            <MenuItem 
+              onClick={() => handleNavigate('/checkin')}
+              selected={currentPath.includes('/checkin')}
+            >
+              <HomeIcon sx={{ mr: 1 }} />
+              Check-in
+            </MenuItem>
           )}
           
+          {showNavigation && (
+            <MenuItem 
+              onClick={() => handleNavigate('/evaluation')}
+              selected={currentPath.includes('/evaluation')}
+            >
+              <Assessment sx={{ mr: 1 }} />
+              Đánh giá
+            </MenuItem>
+          )}
+          
+          {showNavigation && (
+            <MenuItem 
+              onClick={() => handleNavigate('/supporters')}
+              selected={currentPath.includes('/supporters')}
+            >
+              <Leaderboard sx={{ mr: 1 }} />
+              Xếp hạng Supporter
+            </MenuItem>
+          )}
+          
+          {showNavigation && (
+            <MenuItem 
+              onClick={() => handleNavigate('/camps')}
+              selected={currentPath.includes('/camps')}
+            >
+              <Cottage sx={{ mr: 1 }} />
+              Phân trại
+            </MenuItem>
+          )}
+          
+          {/* Logout Item */}
+          {showLogout && <Divider />}
+          
           {showLogout && (
-            <>
-              <Divider />
-              <MenuItem onClick={handleLogout}>
-                <Logout sx={{ mr: 1 }} />
-                Đăng xuất
-              </MenuItem>
-            </>
+            <MenuItem onClick={handleLogout}>
+              <Logout sx={{ mr: 1 }} />
+              Đăng xuất
+            </MenuItem>
           )}
         </Menu>
       </Toolbar>

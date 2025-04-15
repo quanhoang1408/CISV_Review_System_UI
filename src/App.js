@@ -9,6 +9,7 @@ import AdminSelection from './pages/AdminSelection';
 import CheckInPage from './pages/CheckInPage';
 import EvaluationPage from './pages/EvaluationPage';
 import SupporterRankingPage from './pages/SupporterRankingPage';
+import CampAssignmentPage from './pages/CampAssignmentPage'; // Thêm import
 
 // Components
 import AuthWrapper from './components/AuthWrapper';
@@ -63,6 +64,14 @@ function App() {
             element={
               <AuthWrapper>
                 <SupporterRankingPage />
+              </AuthWrapper>
+            } 
+          />
+          <Route 
+            path="/camps" 
+            element={
+              <AuthWrapper>
+                <CampAssignmentPage />
               </AuthWrapper>
             } 
           />
