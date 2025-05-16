@@ -37,7 +37,7 @@ const CheckInPage = () => {
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
   const webcamRef = useRef(null);
-  const [facingMode, setFacingMode] = useState("user");
+  const [facingMode, setFacingMode] = useState("environment");
   const [searchQuery, setSearchQuery] = useState('');
   const [isRecheckin, setIsRecheckin] = useState(false);
 
@@ -669,20 +669,13 @@ const CheckInPage = () => {
                     overflow: 'hidden',
                     boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
                   }}>
-                    <Webcam
-                      audio={false}
-                      ref={webcamRef}
-                      screenshotFormat="image/jpeg"
-                      width="100%"
-                      videoConstraints={{ facingMode: facingMode }}
-                      onUserMedia={() => setIsCaptureReady(true)}
-                    />
-                    {/* Thêm nút chuyển đổi camera */}
+                    {/* Nút chuyển đổi camera ở phía trên */}
                     <IconButton
                       sx={{
                         position: 'absolute',
-                        bottom: 12,
+                        top: 12,
                         right: 12,
+                        zIndex: 10,
                         backgroundColor: 'rgba(255, 255, 255, 0.8)',
                         boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
                         '&:hover': {
@@ -693,6 +686,15 @@ const CheckInPage = () => {
                     >
                       <Cameraswitch />
                     </IconButton>
+
+                    <Webcam
+                      audio={false}
+                      ref={webcamRef}
+                      screenshotFormat="image/jpeg"
+                      width="100%"
+                      videoConstraints={{ facingMode: facingMode }}
+                      onUserMedia={() => setIsCaptureReady(true)}
+                    />
                   </Box>
                 ) : (
                   // Upload tab
