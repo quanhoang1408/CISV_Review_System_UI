@@ -4,23 +4,25 @@ import axios from 'axios';
 import Header from '../components/Header';
 import {
   Container, Typography, Box, Grid, Paper, Avatar, Rating, Tabs, Tab,
-  CircularProgress, Snackbar, Alert, Dialog, DialogContent, DialogTitle, 
+  CircularProgress, Snackbar, Alert, Dialog, DialogContent, DialogTitle,
   IconButton, Divider, Collapse, Button
 } from '@mui/material';
-import { 
-  Person, 
-  Close, 
-  KeyboardArrowDown, 
-  KeyboardArrowUp 
+import {
+  Person,
+  Close,
+  KeyboardArrowDown,
+  KeyboardArrowUp
 } from '@mui/icons-material';
 
 // Criteria names (matching those in EvaluationForm)
-const criteriaList = [
+const supporterCriteriaList = [
   "Năng lượng",
-  "Thái độ",
-  "Kỹ năng giải quyết vấn đề",
-  "Kỹ năng làm việc nhóm",
-  "Sự chủ động"
+  "Thái độ & sự tập trung",
+  "Nhận thức bản thân",
+  "Tư duy phản biện",
+  "Teamwork",
+  "Giao tiếp & kết nối",
+  "Truyền đạt kinh nghiệm"
 ];
 
 const SupporterRankingPage = () => {
@@ -38,14 +40,14 @@ const SupporterRankingPage = () => {
       try {
         // Fetch all participants
         const participantsResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/participants`);
-        
+
         // Filter only supporters
         const supportersOnly = participantsResponse.data.filter(
           participant => participant.type === 'supporter'
         );
-        
+
         // Fetch evaluations for all supporters in parallel
-        const evaluationPromises = supportersOnly.map(supporter => 
+        const evaluationPromises = supportersOnly.map(supporter =>
           axios.get(`${process.env.REACT_APP_API_URL}/api/evaluations/${supporter._id}`)
             .then(response => ({ supporterId: supporter._id, evaluations: response.data }))
             .catch(error => {
@@ -53,15 +55,15 @@ const SupporterRankingPage = () => {
               return { supporterId: supporter._id, evaluations: [] };
             })
         );
-        
+
         const evaluationResults = await Promise.all(evaluationPromises);
-        
+
         // Convert array of results to map object
         const evaluationsMap = {};
         evaluationResults.forEach(result => {
           evaluationsMap[result.supporterId] = result.evaluations;
         });
-        
+
         setSupporters(supportersOnly);
         setEvaluations(evaluationsMap);
       } catch (error) {
@@ -109,15 +111,15 @@ const SupporterRankingPage = () => {
   // Calculate average score for a given supporter and criterion
   const calculateAverageScore = (supporterId, criterionIndex) => {
     const supporterEvaluations = evaluations[supporterId] || [];
-    
+
     if (supporterEvaluations.length === 0) {
       return 0;
     }
-    
-    const criterionName = criteriaList[criterionIndex];
+
+    const criterionName = supporterCriteriaList[criterionIndex];
     let totalScore = 0;
     let count = 0;
-    
+
     supporterEvaluations.forEach(evaluation => {
       const criterionData = evaluation.criteria.find(c => c.name === criterionName);
       if (criterionData && criterionData.score) {
@@ -125,15 +127,15 @@ const SupporterRankingPage = () => {
         count++;
       }
     });
-    
+
     return count > 0 ? totalScore / count : 0;
   };
 
   // Get evaluations for the current criterion for a supporter
   const getCriterionEvaluations = (supporterId) => {
     const supporterEvaluations = evaluations[supporterId] || [];
-    const criterionName = criteriaList[selectedCriterion];
-    
+    const criterionName = supporterCriteriaList[selectedCriterion];
+
     return supporterEvaluations
       .map(evaluation => {
         const criterionData = evaluation.criteria.find(c => c.name === criterionName);
@@ -164,13 +166,13 @@ const SupporterRankingPage = () => {
   const renderAvatar = (participant, size = { width: 80, height: 80 }, clickable = true) => {
     if (participant.checkInStatus && participant.checkInPhoto) {
       return (
-        <Avatar 
-          src={participant.checkInPhoto} 
+        <Avatar
+          src={participant.checkInPhoto}
           alt={participant.name}
-          sx={{ 
+          sx={{
             ...size,
             cursor: clickable ? 'pointer' : 'default',
-            '&:hover': clickable ? { 
+            '&:hover': clickable ? {
               boxShadow: 3,
               transform: 'scale(1.05)'
             } : {}
@@ -187,7 +189,7 @@ const SupporterRankingPage = () => {
       );
     } else {
       return (
-        <Avatar 
+        <Avatar
           sx={{ ...size, bgcolor: 'primary.light' }}
         >
           {participant.name.charAt(0).toUpperCase()}
@@ -204,7 +206,7 @@ const SupporterRankingPage = () => {
           <Typography variant="h4" component="h1" sx={{ mb: 4 }}>
             Xếp hạng Supporter
           </Typography>
-          
+
           {/* Criteria tabs */}
           <Paper elevation={1} sx={{ mb: 4 }}>
             <Tabs
@@ -216,12 +218,12 @@ const SupporterRankingPage = () => {
               indicatorColor="primary"
               aria-label="Tiêu chí"
             >
-              {criteriaList.map((criterion, index) => (
+              {supporterCriteriaList.map((criterion, index) => (
                 <Tab key={index} label={criterion} />
               ))}
             </Tabs>
           </Paper>
-          
+
           {loading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
               <CircularProgress />
@@ -232,14 +234,14 @@ const SupporterRankingPage = () => {
                 const averageScore = calculateAverageScore(supporter._id, selectedCriterion);
                 const isExpanded = expandedSupporter === supporter._id;
                 const criterionEvaluations = getCriterionEvaluations(supporter._id);
-                
+
                 return (
                   <Grid item xs={12} key={supporter._id}>
-                    <Paper 
-                      elevation={2} 
-                      sx={{ 
-                        p: 2, 
-                        borderLeft: 6, 
+                    <Paper
+                      elevation={2}
+                      sx={{
+                        p: 2,
+                        borderLeft: 6,
                         borderColor: 'primary.main',
                         backgroundColor: 'rgba(0, 0, 255, 0.05)'
                       }}
@@ -251,39 +253,39 @@ const SupporterRankingPage = () => {
                             #{index + 1}
                           </Typography>
                         </Box>
-                        
+
                         {renderAvatar(supporter, { width: 60, height: 60 })}
-                        
+
                         <Box sx={{ ml: 2, flexGrow: 1 }}>
                           <Typography variant="h6">
                             {supporter.name}
                           </Typography>
-                          
+
                           <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
                             <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
                               {criteriaList[selectedCriterion]}:
                             </Typography>
-                            <Rating 
-                              value={averageScore} 
-                              readOnly 
-                              precision={0.1} 
-                              size="small" 
+                            <Rating
+                              value={averageScore}
+                              readOnly
+                              precision={0.1}
+                              size="small"
                             />
                             <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
                               ({averageScore.toFixed(1)})
                             </Typography>
                           </Box>
-                          
+
                           <Typography variant="body2" color={supporter.checkInStatus ? "success.main" : "text.secondary"} sx={{ mt: 0.5 }}>
                             {supporter.checkInStatus ? "Đã check-in" : "Chưa check-in"}
                           </Typography>
                         </Box>
-                        
+
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                           <Typography variant="body2" color="text.secondary" sx={{ mr: 2 }}>
                             Số đánh giá: {evaluations[supporter._id]?.length || 0}
                           </Typography>
-                          
+
                           {criterionEvaluations.length > 0 && (
                             <IconButton
                               onClick={() => toggleExpandSupporter(supporter._id)}
@@ -295,7 +297,7 @@ const SupporterRankingPage = () => {
                           )}
                         </Box>
                       </Box>
-                      
+
                       {/* Expandable evaluation details */}
                       <Collapse in={isExpanded}>
                         <Box sx={{ mt: 2, pl: 14 }}>
@@ -303,7 +305,7 @@ const SupporterRankingPage = () => {
                           <Typography variant="subtitle1" gutterBottom>
                             Đánh giá về {criteriaList[selectedCriterion].toLowerCase()}:
                           </Typography>
-                          
+
                           {criterionEvaluations.length > 0 ? (
                             criterionEvaluations.map((evaluation, idx) => (
                               <Paper key={idx} variant="outlined" sx={{ mb: 2, p: 2 }}>
@@ -315,14 +317,14 @@ const SupporterRankingPage = () => {
                                     {evaluation.date}
                                   </Typography>
                                 </Box>
-                                
+
                                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                   <Typography variant="body2" sx={{ mr: 1 }}>
                                     Điểm số:
                                   </Typography>
                                   <Rating value={evaluation.score} readOnly size="small" />
                                 </Box>
-                                
+
                                 <Typography variant="body2" sx={{ fontStyle: 'italic', mt: 1 }}>
                                   "{evaluation.evidence}"
                                 </Typography>
@@ -348,7 +350,7 @@ const SupporterRankingPage = () => {
             </Box>
           )}
         </Box>
-        
+
         {/* Image Dialog */}
         <Dialog
           open={imageDialog.open}
@@ -366,8 +368,8 @@ const SupporterRankingPage = () => {
           </DialogTitle>
           <DialogContent>
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
-              <img 
-                src={imageDialog.imageUrl} 
+              <img
+                src={imageDialog.imageUrl}
                 alt={imageDialog.name}
                 style={{ maxWidth: '100%', maxHeight: '70vh' }}
                 onError={(e) => {
@@ -379,17 +381,17 @@ const SupporterRankingPage = () => {
             </Box>
           </DialogContent>
         </Dialog>
-        
+
         {/* Snackbar for notifications */}
-        <Snackbar 
-          open={snackbar.open} 
-          autoHideDuration={6000} 
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
           onClose={handleSnackbarClose}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         >
-          <Alert 
-            onClose={handleSnackbarClose} 
-            severity={snackbar.severity} 
+          <Alert
+            onClose={handleSnackbarClose}
+            severity={snackbar.severity}
             variant="filled"
             sx={{ width: '100%' }}
           >

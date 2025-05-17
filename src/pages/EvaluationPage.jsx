@@ -10,11 +10,11 @@ import {
   Button, Avatar, Paper, IconButton, Rating, Divider,
   CircularProgress, Snackbar, Alert, TextField, InputAdornment,
   Chip, Dialog, DialogContent, DialogTitle, useTheme,
-  Fade, Zoom, alpha
+  Fade, Zoom, alpha, Tooltip
 } from '@mui/material';
 import {
   ArrowBack, Add, Search, Person, EmojiPeople, Close,
-  CheckCircleOutline, HourglassEmpty
+  CheckCircleOutline, HourglassEmpty, Delete
 } from '@mui/icons-material';
 
 const EvaluationPage = () => {
@@ -26,9 +26,24 @@ const EvaluationPage = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
   const [searchQuery, setSearchQuery] = useState('');
   const [imageDialog, setImageDialog] = useState({ open: false, imageUrl: '', name: '' });
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [deleteDialog, setDeleteDialog] = useState({ open: false, evaluationId: null });
   // Sử dụng ref thay vì state để lưu vị trí cuộn và trạng thái trước đó
   const scrollPositionRef = useRef(0);
   const prevSelectedParticipantRef = useRef(null);
+
+  // Kiểm tra xem người dùng hiện tại có phải là super admin không
+  useEffect(() => {
+    try {
+      const adminData = JSON.parse(localStorage.getItem('currentAdmin'));
+      if (adminData) {
+        // Quân Hoàng là super admin
+        setIsSuperAdmin(adminData.isSuperAdmin || adminData.name === 'Quân Hoàng');
+      }
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+    }
+  }, []);
 
   useEffect(() => {
     // Admin check is now handled by AuthWrapper
@@ -188,6 +203,37 @@ const EvaluationPage = () => {
     setImageDialog({ open: false, imageUrl: '', name: '' });
   };
 
+  // Xử lý hiển thị dialog xác nhận xóa đánh giá
+  const handleDeleteClick = (evaluationId) => {
+    setDeleteDialog({ open: true, evaluationId });
+  };
+
+  // Xử lý đóng dialog xác nhận xóa
+  const handleCloseDeleteDialog = () => {
+    setDeleteDialog({ open: false, evaluationId: null });
+  };
+
+  // Xử lý xóa đánh giá
+  const handleDeleteEvaluation = async () => {
+    if (!deleteDialog.evaluationId) return;
+
+    setLoading(true);
+    try {
+      await axios.delete(`${process.env.REACT_APP_API_URL}/api/evaluations/${deleteDialog.evaluationId}`);
+
+      // Cập nhật danh sách đánh giá sau khi xóa
+      setEvaluations(evaluations.filter(evaluation => evaluation._id !== deleteDialog.evaluationId));
+
+      showSnackbar('Đã xóa đánh giá thành công', 'success');
+    } catch (error) {
+      console.error('Error deleting evaluation:', error);
+      showSnackbar('Có lỗi xảy ra khi xóa đánh giá', 'error');
+    } finally {
+      setLoading(false);
+      handleCloseDeleteDialog();
+    }
+  };
+
   // Helper function to render avatar with error handling
   const renderAvatar = (participant, size = { width: 100, height: 100 }) => {
     console.log(`Rendering avatar for ${participant.name}, checkInStatus: ${participant.checkInStatus}, photo URL: ${participant.checkInPhoto}`);
@@ -285,9 +331,24 @@ const EvaluationPage = () => {
                     left: 0,
                     right: 0,
                     height: 8,
-                    backgroundColor: 'primary.main'
+                    backgroundColor: selectedParticipant.type === 'leader' ? 'error.main' : 'primary.main'
                   }}
                 />
+
+                <Box sx={{ mb: 3 }}>
+                  <Button
+                    variant="outlined"
+                    startIcon={<ArrowBack />}
+                    onClick={handleCancelForm}
+                    sx={{
+                      borderRadius: 6,
+                      px: 3
+                    }}
+                  >
+                    Quay lại
+                  </Button>
+                </Box>
+
                 <EvaluationForm
                   participant={selectedParticipant}
                   onSubmit={handleFormSubmit}
@@ -319,6 +380,20 @@ const EvaluationPage = () => {
                       backgroundColor: selectedParticipant.type === 'leader' ? 'error.main' : 'primary.main'
                     }}
                   />
+
+                  <Box sx={{ mb: 3 }}>
+                    <Button
+                      variant="outlined"
+                      startIcon={<ArrowBack />}
+                      onClick={() => setSelectedParticipant(null)}
+                      sx={{
+                        borderRadius: 6,
+                        px: 3
+                      }}
+                    >
+                      Quay lại danh sách
+                    </Button>
+                  </Box>
 
                   <Box
                     sx={{
@@ -529,28 +604,49 @@ const EvaluationPage = () => {
                                 mb: 2,
                                 pb: 1.5,
                                 borderBottom: '1px solid',
-                                borderColor: 'divider'
+                                borderColor: 'divider',
+                                justifyContent: 'space-between'
                               }}
                             >
-                              <Avatar
-                                sx={{
-                                  width: 36,
-                                  height: 36,
-                                  mr: 1.5,
-                                  bgcolor: 'primary.main',
-                                  fontSize: '0.9rem'
-                                }}
-                              >
-                                {(evaluation.evaluatorId?.name || 'U').charAt(0)}
-                              </Avatar>
-                              <Box>
-                                <Typography variant="subtitle1" fontWeight="medium">
-                                  {evaluation.evaluatorId?.name || 'Unknown'}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                  {new Date(evaluation.createdAt).toLocaleString()}
-                                </Typography>
+                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                <Avatar
+                                  sx={{
+                                    width: 36,
+                                    height: 36,
+                                    mr: 1.5,
+                                    bgcolor: 'primary.main',
+                                    fontSize: '0.9rem'
+                                  }}
+                                >
+                                  {(evaluation.evaluatorId?.name || 'U').charAt(0)}
+                                </Avatar>
+                                <Box>
+                                  <Typography variant="subtitle1" fontWeight="medium">
+                                    {evaluation.evaluatorId?.name || 'Unknown'}
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary">
+                                    {new Date(evaluation.createdAt).toLocaleString()}
+                                  </Typography>
+                                </Box>
                               </Box>
+
+                              {/* Nút xóa đánh giá chỉ hiển thị cho super admin */}
+                              {isSuperAdmin && (
+                                <Tooltip title="Xóa đánh giá này">
+                                  <IconButton
+                                    size="small"
+                                    color="error"
+                                    onClick={() => handleDeleteClick(evaluation._id)}
+                                    sx={{
+                                      '&:hover': {
+                                        backgroundColor: 'rgba(211, 47, 47, 0.1)'
+                                      }
+                                    }}
+                                  >
+                                    <Delete fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+                              )}
                             </Box>
 
                             {/* Lọc và chỉ hiển thị những tiêu chí có nhận xét (evidence) */}
@@ -604,18 +700,7 @@ const EvaluationPage = () => {
                     </Box>
                   )}
 
-                  <Button
-                    variant="outlined"
-                    startIcon={<ArrowBack />}
-                    onClick={() => setSelectedParticipant(null)}
-                    sx={{
-                      mt: 3,
-                      borderRadius: 6,
-                      px: 3
-                    }}
-                  >
-                    Quay lại danh sách
-                  </Button>
+
                 </Paper>
               </Box>
             </Fade>
@@ -948,6 +1033,46 @@ const EvaluationPage = () => {
                   e.target.alt = 'Không thể tải ảnh';
                 }}
               />
+            </Box>
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog xác nhận xóa đánh giá */}
+        <Dialog
+          open={deleteDialog.open}
+          onClose={handleCloseDeleteDialog}
+          maxWidth="xs"
+          fullWidth
+          sx={{
+            '& .MuiDialog-paper': {
+              borderRadius: 2,
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)'
+            }
+          }}
+        >
+          <DialogTitle sx={{ pb: 1 }}>
+            Xác nhận xóa
+          </DialogTitle>
+          <DialogContent sx={{ pt: 1 }}>
+            <Typography variant="body1" sx={{ mb: 3 }}>
+              Bạn có chắc chắn muốn xóa đánh giá này không? Hành động này không thể hoàn tác.
+            </Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 2 }}>
+              <Button
+                variant="outlined"
+                onClick={handleCloseDeleteDialog}
+                sx={{ borderRadius: 2 }}
+              >
+                Hủy
+              </Button>
+              <Button
+                variant="contained"
+                color="error"
+                onClick={handleDeleteEvaluation}
+                sx={{ borderRadius: 2 }}
+              >
+                Xóa
+              </Button>
             </Box>
           </DialogContent>
         </Dialog>
