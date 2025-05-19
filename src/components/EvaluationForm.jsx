@@ -57,20 +57,37 @@ const EvaluationForm = ({ participant, onSubmit, onCancel }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Lọc ra những tiêu chí có nhận xét
-    const evaluationsWithEvidence = evaluations.filter(
-      evaluation => evaluation.evidence.trim() !== ''
+    // Lọc ra những tiêu chí có nhận xét và có đánh giá sao (score > 0)
+    const validEvaluations = evaluations.filter(
+      evaluation => evaluation.evidence.trim() !== '' && evaluation.score > 0
     );
 
-    // Kiểm tra xem có ít nhất một minh chứng được nhập không
-    if (evaluationsWithEvidence.length === 0) {
-      setError('Vui lòng nhập ít nhất một minh chứng');
+    // Lọc ra những tiêu chí có nhận xét nhưng không có đánh giá sao
+    const incompleteEvaluations = evaluations.filter(
+      evaluation => evaluation.evidence.trim() !== '' && evaluation.score === 0
+    );
+
+    // Nếu có tiêu chí không đầy đủ (có nhận xét nhưng không có sao), hiển thị cảnh báo
+    if (incompleteEvaluations.length > 0) {
+      const criteriaNames = incompleteEvaluations.map(e => e.name).join(', ');
+      setError(`Các tiêu chí sau có nhận xét nhưng chưa đánh giá sao: ${criteriaNames}. Những tiêu chí này sẽ không được lưu.`);
+
+      // Nếu không có tiêu chí nào hợp lệ, dừng lại
+      if (validEvaluations.length === 0) {
+        return;
+      }
+    } else {
+      setError('');
+    }
+
+    // Kiểm tra xem có ít nhất một tiêu chí hợp lệ không
+    if (validEvaluations.length === 0) {
+      setError('Vui lòng nhập ít nhất một minh chứng và đánh giá sao');
       return;
     }
 
-    setError('');
-    // Chỉ gửi những tiêu chí có nhận xét
-    onSubmit(evaluationsWithEvidence);
+    // Chỉ gửi những tiêu chí có cả nhận xét và đánh giá sao
+    onSubmit(validEvaluations);
   };
 
   return (
@@ -144,7 +161,7 @@ const EvaluationForm = ({ participant, onSubmit, onCancel }) => {
 
         <Box sx={{ mt: { xs: 2, sm: 0 } }}>
           <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-            Chỉ những tiêu chí có nhận xét mới được lưu
+            Chỉ những tiêu chí có cả nhận xét và đánh giá sao mới được lưu
           </Typography>
         </Box>
       </Box>
@@ -230,7 +247,7 @@ const EvaluationForm = ({ participant, onSubmit, onCancel }) => {
             variant="outlined"
             value={evaluations[index].evidence}
             onChange={(e) => handleEvidenceChange(index, e)}
-            placeholder="Nhập minh chứng cụ thể cho đánh giá này (không bắt buộc)"
+            placeholder="Nhập minh chứng cụ thể cho đánh giá này (cần cả đánh giá sao để lưu)"
             sx={{
               mt: 2,
               '& .MuiOutlinedInput-root': {

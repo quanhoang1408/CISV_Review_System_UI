@@ -28,6 +28,7 @@ const EvaluationPage = () => {
   const [imageDialog, setImageDialog] = useState({ open: false, imageUrl: '', name: '' });
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, evaluationId: null });
+  const [updatingSheet, setUpdatingSheet] = useState(false);
   // Sử dụng ref thay vì state để lưu vị trí cuộn và trạng thái trước đó
   const scrollPositionRef = useRef(0);
   const prevSelectedParticipantRef = useRef(null);
@@ -231,6 +232,25 @@ const EvaluationPage = () => {
     } finally {
       setLoading(false);
       handleCloseDeleteDialog();
+    }
+  };
+
+  // Xử lý cập nhật sheet đánh giá
+  const handleUpdateEvaluationSheet = async () => {
+    setUpdatingSheet(true);
+    try {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/sheets/update-evaluation`);
+
+      if (response.data.success) {
+        showSnackbar('Đã cập nhật sheet đánh giá thành công', 'success');
+      } else {
+        showSnackbar('Có lỗi xảy ra khi cập nhật sheet đánh giá', 'error');
+      }
+    } catch (error) {
+      console.error('Error updating evaluation sheet:', error);
+      showSnackbar('Có lỗi xảy ra khi cập nhật sheet đánh giá', 'error');
+    } finally {
+      setUpdatingSheet(false);
     }
   };
 
@@ -706,43 +726,69 @@ const EvaluationPage = () => {
             </Fade>
           ) : !loading && participants.length > 0 ? (
             <>
-              {/* Thêm ô tìm kiếm */}
-              <Box
-                sx={{
-                  mb: 4,
-                  position: 'relative',
-                  maxWidth: 500,
-                  mx: 'auto'
-                }}
-              >
-                <TextField
-                  fullWidth
-                  placeholder="Tìm kiếm theo tên..."
-                  value={searchQuery}
-                  onChange={handleSearchChange}
-                  variant="outlined"
+              {/* Thêm nút cập nhật sheet đánh giá và ô tìm kiếm */}
+              <Box sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 2,
+                mb: 4
+              }}>
+                {/* Nút cập nhật sheet đánh giá chỉ hiển thị cho super admin */}
+                {isSuperAdmin && (
+                  <Button
+                    variant="contained"
+                    color="success"
+                    onClick={handleUpdateEvaluationSheet}
+                    disabled={updatingSheet}
+                    startIcon={updatingSheet ? <CircularProgress size={20} color="inherit" /> : null}
+                    sx={{
+                      borderRadius: 2,
+                      whiteSpace: 'nowrap',
+                      px: 3,
+                      py: 1,
+                      mb: 2
+                    }}
+                  >
+                    {updatingSheet ? 'Đang cập nhật...' : 'Cập nhật Sheet Đánh giá'}
+                  </Button>
+                )}
+
+                <Box
                   sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 3,
-                      backgroundColor: alpha(theme.palette.primary.main, 0.04),
-                      transition: 'all 0.3s',
-                      '&:hover': {
-                        backgroundColor: alpha(theme.palette.primary.main, 0.08),
-                      },
-                      '&.Mui-focused': {
-                        backgroundColor: '#fff',
-                        boxShadow: '0 0 0 2px rgba(25, 118, 210, 0.2)'
+                    position: 'relative',
+                    maxWidth: 500,
+                    width: '100%'
+                  }}
+                >
+                  <TextField
+                    fullWidth
+                    placeholder="Tìm kiếm theo tên..."
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                    variant="outlined"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 3,
+                        backgroundColor: alpha(theme.palette.primary.main, 0.04),
+                        transition: 'all 0.3s',
+                        '&:hover': {
+                          backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                        },
+                        '&.Mui-focused': {
+                          backgroundColor: '#fff',
+                          boxShadow: '0 0 0 2px rgba(25, 118, 210, 0.2)'
+                        }
                       }
-                    }
-                  }}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Search color="primary" />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
+                    }}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Search color="primary" />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
                 {searchQuery && (
                   <IconButton
                     size="small"
@@ -761,6 +807,7 @@ const EvaluationPage = () => {
                     <Close fontSize="small" />
                   </IconButton>
                 )}
+                </Box>
               </Box>
 
               <Box
