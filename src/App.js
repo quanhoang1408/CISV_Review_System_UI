@@ -13,6 +13,8 @@ import AdminManagementPage from './pages/AdminManagementPage';
 // Components
 import AuthWrapper from './components/AuthWrapper';
 
+const baseTheme = createTheme();
+
 // Theme configuration
 const theme = createTheme({
   palette: {
@@ -76,12 +78,7 @@ const theme = createTheme({
     borderRadius: 8,
   },
   shadows: [
-    'none',
-    '0px 2px 1px -1px rgba(0,0,0,0.05),0px 1px 1px 0px rgba(0,0,0,0.03),0px 1px 3px 0px rgba(0,0,0,0.05)',
-    '0px 3px 3px -2px rgba(0,0,0,0.06),0px 3px 4px 0px rgba(0,0,0,0.04),0px 1px 8px 0px rgba(0,0,0,0.06)',
-    '0px 3px 5px -1px rgba(0,0,0,0.07),0px 5px 8px 0px rgba(0,0,0,0.05),0px 1px 14px 0px rgba(0,0,0,0.07)',
-    '0px 4px 5px -2px rgba(0,0,0,0.08),0px 7px 10px 1px rgba(0,0,0,0.06),0px 2px 16px 1px rgba(0,0,0,0.08)',
-    // ... rest of the shadows remain the same
+    ...baseTheme.shadows.slice(0, 25),
   ],
   components: {
     MuiButton: {
@@ -112,6 +109,9 @@ const theme = createTheme({
         },
         elevation3: {
           boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.12)',
+        },
+        elevation24: {
+          boxShadow: baseTheme.shadows[24],
         },
       },
     },

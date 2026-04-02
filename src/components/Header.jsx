@@ -47,7 +47,9 @@ const Header = ({ title, showLogout = true }) => {
   const getTabValue = () => {
     if (currentPath.includes('/checkin')) return 0;
     if (currentPath.includes('/evaluation')) return 1;
-    if (currentPath.includes('/admin-management')) return 2;
+    if (currentPath.includes('/admin-management')) {
+      return isSuperAdmin ? 2 : false;
+    }
     return false; // No tab active if on another page
   };
 

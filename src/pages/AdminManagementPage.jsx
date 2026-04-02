@@ -34,8 +34,10 @@ const AdminManagementPage = () => {
   });
   const [participantFormData, setParticipantFormData] = useState({
     name: '',
+    namesText: '',
     type: 'supporter'
   });
+  const [participantBulkResult, setParticipantBulkResult] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteType, setDeleteType] = useState('');
   const [currentAdmin, setCurrentAdmin] = useState(null);
@@ -189,21 +191,25 @@ const AdminManagementPage = () => {
       setCurrentParticipant(participant);
       setParticipantFormData({
         name: participant.name,
+        namesText: '',
         type: participant.type || 'supporter'
       });
     } else {
       setCurrentParticipant(null);
       setParticipantFormData({
         name: '',
+        namesText: '',
         type: 'supporter'
       });
     }
+    setParticipantBulkResult(null);
     setParticipantDialogOpen(true);
   };
 
   // Hàm đóng dialog thêm/sửa participant
   const handleCloseParticipantDialog = () => {
     setParticipantDialogOpen(false);
+    setParticipantBulkResult(null);
   };
 
   // Hàm xử lý thay đổi input trong form participant
@@ -242,8 +248,34 @@ const AdminManagementPage = () => {
       showSnackbar('Có lỗi xảy ra khi lưu người tham gia', 'error');
     }
   };
+  const handleSubmitParticipantAction = async () => {
+    try {
+      if (currentParticipant) {
+        await axios.put(
+          `${process.env.REACT_APP_API_URL}/api/participants/${currentParticipant._id}`,
+          participantFormData
+        );
+        showSnackbar('Cap nhat nguoi tham gia thanh cong', 'success');
+        await fetchData();
+        handleCloseParticipantDialog();
+      } else {
+        const response = await axios.post(
+          `${process.env.REACT_APP_API_URL}/api/participants`,
+          {
+            namesText: participantFormData.namesText,
+            type: participantFormData.type
+          }
+        );
+        setParticipantBulkResult(response.data);
+        showSnackbar(response.data.message || 'Da xu ly danh sach nguoi tham gia', 'success');
+        await fetchData();
+      }
+    } catch (error) {
+      console.error('Error saving participant:', error);
+      showSnackbar('Co loi xay ra khi luu nguoi tham gia', 'error');
+    }
+  };
 
-  // Kiểm tra xem người dùng hiện tại có phải là superadmin không
   const isSuperAdmin = currentAdmin?.isSuperAdmin || currentAdmin?.name === 'Quân Hoàng';
 
   if (!isSuperAdmin) {
@@ -577,11 +609,18 @@ const AdminManagementPage = () => {
               <TextField
                 fullWidth
                 margin="normal"
-                label="Tên"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
+                label={currentParticipant ? 'Cap nhat' : 'Them danh sach'}
+                name={currentParticipant ? 'name' : 'namesText'}
+                value={currentParticipant ? participantFormData.name : participantFormData.namesText}
+                onChange={handleParticipantInputChange}
                 required
+                multiline={!currentParticipant}
+                minRows={currentParticipant ? 1 : 8}
+                helperText={
+                  currentParticipant
+                    ? ''
+                    : 'Moi dong la mot nguoi. Ten trung trong danh sach hoac da co san se bi bo qua.'
+                }
               />
               <FormControl fullWidth margin="normal">
                 <InputLabel>Vai trò</InputLabel>
@@ -677,18 +716,25 @@ const AdminManagementPage = () => {
           }}
         >
           <DialogTitle>
-            {currentParticipant ? 'Chỉnh sửa người tham gia' : 'Thêm người tham gia mới'}
+            {currentParticipant ? 'Cap nhat nguoi tham gia' : 'Them danh sach nguoi tham gia'}
           </DialogTitle>
           <DialogContent>
             <Box sx={{ pt: 1 }}>
               <TextField
                 fullWidth
                 margin="normal"
-                label="Tên"
-                name="name"
-                value={participantFormData.name}
+                label={currentParticipant ? 'Ten' : 'Danh sach ten'}
+                name={currentParticipant ? 'name' : 'namesText'}
+                value={currentParticipant ? participantFormData.name : participantFormData.namesText}
                 onChange={handleParticipantInputChange}
                 required
+                multiline={!currentParticipant}
+                minRows={currentParticipant ? 1 : 8}
+                helperText={
+                  currentParticipant
+                    ? ''
+                    : 'Moi dong la mot nguoi. Ten trung trong danh sach hoac da co san se bi bo qua.'
+                }
               />
               <FormControl fullWidth margin="normal">
                 <InputLabel>Loại</InputLabel>
@@ -702,17 +748,56 @@ const AdminManagementPage = () => {
                   <MenuItem value="leader">Leader</MenuItem>
                 </Select>
               </FormControl>
+              {!currentParticipant && participantBulkResult && (
+                <Box sx={{ mt: 2 }}>
+                  <Alert severity="success" sx={{ mb: 2 }}>
+                    {participantBulkResult.message}
+                  </Alert>
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="subtitle2" fontWeight={600} color="success.main" sx={{ mb: 1 }}>
+                      Them thanh cong
+                    </Typography>
+                    {participantBulkResult.createdParticipants?.length > 0 ? (
+                      participantBulkResult.createdParticipants.map((participant) => (
+                        <Typography key={participant._id} variant="body2" sx={{ mb: 0.5 }}>
+                          - {participant.name}
+                        </Typography>
+                      ))
+                    ) : (
+                      <Typography variant="body2" color="text.secondary">
+                        Khong co ai duoc them.
+                      </Typography>
+                    )}
+                  </Box>
+                  <Box>
+                    <Typography variant="subtitle2" fontWeight={600} color="error.main" sx={{ mb: 1 }}>
+                      Khong them duoc
+                    </Typography>
+                    {participantBulkResult.skippedParticipants?.length > 0 ? (
+                      participantBulkResult.skippedParticipants.map((participant, index) => (
+                        <Typography key={`${participant.name}-${index}`} variant="body2" sx={{ mb: 0.5 }}>
+                          - {participant.name}: {participant.reason}
+                        </Typography>
+                      ))
+                    ) : (
+                      <Typography variant="body2" color="text.secondary">
+                        Khong co ten nao bi bo qua.
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
+              )}
             </Box>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2 }}>
-            <Button onClick={handleCloseParticipantDialog}>Hủy</Button>
+            <Button onClick={handleCloseParticipantDialog}>Huy</Button>
             <Button
               variant="contained"
-              onClick={handleSubmitParticipant}
-              disabled={!participantFormData.name}
+              onClick={handleSubmitParticipantAction}
+              disabled={currentParticipant ? !participantFormData.name.trim() : !participantFormData.namesText.trim()}
               color="secondary"
             >
-              {currentParticipant ? 'Cập nhật' : 'Thêm mới'}
+              {currentParticipant ? 'Cap nhat' : 'Them danh sach'}
             </Button>
           </DialogActions>
         </Dialog>
