@@ -11,7 +11,8 @@ import {
   DialogContent, DialogActions, Avatar, Tab, Tabs,
   Input, CircularProgress, Snackbar, Alert,
   TextField, InputAdornment, useTheme,
-  Fade, Zoom, alpha, Chip, Divider
+  Fade, Zoom, alpha, Chip, Divider,
+  LinearProgress
 } from '@mui/material';
 import {
   FileUpload,
@@ -34,6 +35,7 @@ const CheckInPage = () => {
   const [tabValue, setTabValue] = useState(0);
   const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
   const webcamRef = useRef(null);
   const [facingMode, setFacingMode] = useState("environment");
@@ -112,12 +114,21 @@ const CheckInPage = () => {
 
         // Nén ảnh trước khi upload
         console.log('Compressing webcam image...');
-        const compressedImage = await compressImage(imageSrc, 800, 800, 0.8);
+        const compressedImage = await compressImage(imageSrc, 600, 600, 0.7);
+
+        // Kết quả progress
+        setUploadProgress(0);
 
         // Upload ảnh đã nén từ camera (base64)
         const uploadResponse = await axios.post(
           `${process.env.REACT_APP_API_URL}/api/upload-photo`,
-          { photo: compressedImage }
+          { photo: compressedImage },
+          {
+            onUploadProgress: (progressEvent) => {
+              const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+              setUploadProgress(percentCompleted);
+            }
+          }
         );
         photoUrl = uploadResponse.data.url;
       } else { // Upload tab
@@ -129,16 +140,24 @@ const CheckInPage = () => {
 
         // Nén file ảnh trước khi upload
         console.log('Compressing uploaded image file...');
-        const compressedFile = await compressImageFile(selectedFile, 800, 800, 0.8);
+        const compressedFile = await compressImageFile(selectedFile, 600, 600, 0.7);
 
         // Create form data for file upload
         const formData = new FormData();
         formData.append('photo', compressedFile);
 
+        setUploadProgress(0);
+
         // Important: Don't set Content-Type header manually, let browser set it with boundary
         const uploadResponse = await axios.post(
           `${process.env.REACT_APP_API_URL}/api/upload-photo/file`,
-          formData
+          formData,
+          {
+            onUploadProgress: (progressEvent) => {
+              const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+              setUploadProgress(percentCompleted);
+            }
+          }
         );
 
         photoUrl = uploadResponse.data.url;
@@ -187,6 +206,7 @@ const CheckInPage = () => {
       showSnackbar(errorMessage, 'error');
     } finally {
       setLoading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -808,6 +828,15 @@ const CheckInPage = () => {
                   </Box>
                 )}
               </Box>
+
+              {loading && uploadProgress > 0 && (
+                <Box sx={{ px: 2, pb: 1 }}>
+                  <LinearProgress variant="determinate" value={uploadProgress} />
+                  <Typography variant="caption" sx={{ mt: 1, display: 'block', textAlign: 'right' }}>
+                    Upload: {uploadProgress}%
+                  </Typography>
+                </Box>
+              )}
             </DialogContent>
 
             <DialogActions sx={{

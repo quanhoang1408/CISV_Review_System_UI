@@ -8,7 +8,7 @@
  * @param {number} quality - Chất lượng ảnh (0-1)
  * @returns {Promise<string>} - Chuỗi base64 đã được nén
  */
-export const compressImage = (base64Image, maxWidth = 800, maxHeight = 800, quality = 0.8) => {
+export const compressImage = (base64Image, maxWidth = 600, maxHeight = 600, quality = 0.7) => {
   return new Promise((resolve, reject) => {
     try {
       // Tạo một đối tượng Image để lấy kích thước ảnh
@@ -66,7 +66,7 @@ export const compressImage = (base64Image, maxWidth = 800, maxHeight = 800, qual
  * @param {number} quality - Chất lượng ảnh (0-1)
  * @returns {Promise<File>} - File ảnh đã được nén
  */
-export const compressImageFile = (file, maxWidth = 800, maxHeight = 800, quality = 0.8) => {
+export const compressImageFile = (file, maxWidth = 600, maxHeight = 600, quality = 0.7) => {
   return new Promise((resolve, reject) => {
     try {
       // Kiểm tra xem file có phải là ảnh không
