@@ -1,9 +1,8 @@
 import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 
 const AuthWrapper = ({ children, requireSuperAdmin = false }) => {
   const admin = localStorage.getItem('currentAdmin');
-  const location = useLocation();
 
   // Nếu không có admin, chuyển hướng về trang đăng nhập
   if (!admin) {

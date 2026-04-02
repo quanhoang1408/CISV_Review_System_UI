@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import {
   Box, Typography, Rating, TextField, Button,
-  Divider, Stack, Grid, Alert
+  Stack, Grid, Alert
 } from '@mui/material';
 
 // Tiêu chí đánh giá cho Leader

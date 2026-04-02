@@ -1,13 +1,11 @@
 // src/components/PageContainer.jsx
 import React from 'react';
-import { Container, Box, useTheme } from '@mui/material';
+import { Container, Box } from '@mui/material';
 
 /**
  * A consistent container for all pages with proper spacing and styling
  */
 const PageContainer = ({ children, maxWidth = "lg" }) => {
-  const theme = useTheme();
-  
   return (
     <>
       {/* Toolbar spacer to account for fixed header */}

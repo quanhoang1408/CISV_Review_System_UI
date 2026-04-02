@@ -10,11 +10,10 @@ import {
   CardContent, IconButton, Dialog, DialogTitle,
   DialogContent, DialogActions, Avatar, Tab, Tabs,
   Input, CircularProgress, Snackbar, Alert,
-  TextField, InputAdornment, Tooltip, useTheme, useMediaQuery,
-  Fade, Zoom, alpha, Paper, Chip, Divider, LinearProgress
+  TextField, InputAdornment, useTheme,
+  Fade, Zoom, alpha, Chip, Divider
 } from '@mui/material';
 import {
-  PhotoCamera,
   FileUpload,
   Cameraswitch,
   Search,
@@ -201,8 +200,6 @@ const CheckInPage = () => {
 
   // Add theme and responsive hooks
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-
   return (
     <>
       <Header title="CISV Meme System" />

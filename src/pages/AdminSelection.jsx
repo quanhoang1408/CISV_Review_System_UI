@@ -6,7 +6,7 @@ import Header from '../components/Header';
 import PageContainer from '../components/PageContainer';
 import {
   Box, Typography, FormControl,
-  InputLabel, Select, MenuItem, Button, Paper,
+  InputLabel, Select, MenuItem, Button,
   useTheme, alpha, Avatar, Card, CardContent,
   Fade, CircularProgress, TextField, Dialog,
   DialogTitle, DialogContent, DialogActions, Alert

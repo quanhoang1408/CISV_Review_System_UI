@@ -1,5 +1,5 @@
 // src/pages/AdminManagementPage.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import Header from '../components/Header';
 import PageContainer from '../components/PageContainer';
@@ -8,12 +8,11 @@ import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Dialog, DialogActions, DialogContent, DialogTitle,
   FormControl, InputLabel, Select, MenuItem, Switch, FormControlLabel,
-  Snackbar, Alert, CircularProgress, Tooltip, Chip, alpha, useTheme,
-  Divider, Avatar
+  Snackbar, Alert, CircularProgress, Tooltip, Chip, Avatar
 } from '@mui/material';
 import {
-  Add, Edit, Delete, PersonAdd, Check, Close, Refresh,
-  PhotoCamera, DeleteForever, SupervisorAccount, Person
+  Edit, Delete, PersonAdd, Check, Close, Refresh,
+  DeleteForever, SupervisorAccount, Person
 } from '@mui/icons-material';
 
 const AdminManagementPage = () => {
@@ -41,39 +40,35 @@ const AdminManagementPage = () => {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteType, setDeleteType] = useState('');
   const [currentAdmin, setCurrentAdmin] = useState(null);
-  const theme = useTheme();
+
+  const showSnackbar = useCallback((message, severity = 'info') => {
+    setSnackbar({ open: true, message, severity });
+  }, []);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const usersResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/users`);
+      setUsers(usersResponse.data);
+
+      const participantsResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/participants`);
+      setParticipants(participantsResponse.data);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      showSnackbar('Kh??ng th??? t???i d??? li???u', 'error');
+    } finally {
+      setLoading(false);
+    }
+  }, [showSnackbar]);
 
   useEffect(() => {
-    // Lấy thông tin admin hiện tại từ localStorage
     const adminData = localStorage.getItem('currentAdmin');
     if (adminData) {
       setCurrentAdmin(JSON.parse(adminData));
     }
 
     fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      // Fetch users
-      const usersResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/users`);
-      setUsers(usersResponse.data);
-
-      // Fetch participants
-      const participantsResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/participants`);
-      setParticipants(participantsResponse.data);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      showSnackbar('Không thể tải dữ liệu', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const showSnackbar = (message, severity = 'info') => {
-    setSnackbar({ open: true, message, severity });
-  };
+  }, [fetchData]);
 
   const handleSnackbarClose = () => {
     setSnackbar({ ...snackbar, open: false });
@@ -116,14 +111,14 @@ const AdminManagementPage = () => {
     try {
       if (currentUser) {
         // Update existing user
-        const response = await axios.put(
+        await axios.put(
           `${process.env.REACT_APP_API_URL}/api/users/${currentUser._id}`,
           formData
         );
         showSnackbar('Cập nhật người dùng thành công', 'success');
       } else {
         // Create new user
-        const response = await axios.post(
+        await axios.post(
           `${process.env.REACT_APP_API_URL}/api/users`,
           formData
         );
@@ -222,32 +217,6 @@ const AdminManagementPage = () => {
   };
 
   // Hàm xử lý submit form participant
-  const handleSubmitParticipant = async () => {
-    try {
-      if (currentParticipant) {
-        // Update existing participant
-        await axios.put(
-          `${process.env.REACT_APP_API_URL}/api/participants/${currentParticipant._id}`,
-          participantFormData
-        );
-        showSnackbar('Cập nhật người tham gia thành công', 'success');
-      } else {
-        // Create new participant
-        await axios.post(
-          `${process.env.REACT_APP_API_URL}/api/participants`,
-          participantFormData
-        );
-        showSnackbar('Tạo người tham gia mới thành công', 'success');
-      }
-
-      // Refresh data
-      fetchData();
-      handleCloseParticipantDialog();
-    } catch (error) {
-      console.error('Error saving participant:', error);
-      showSnackbar('Có lỗi xảy ra khi lưu người tham gia', 'error');
-    }
-  };
   const handleSubmitParticipantAction = async () => {
     try {
       if (currentParticipant) {

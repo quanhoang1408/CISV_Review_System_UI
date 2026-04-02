@@ -4,10 +4,9 @@ import axios from 'axios';
 import EvaluationForm from '../components/EvaluationForm';
 import Header from '../components/Header';
 import PageContainer from '../components/PageContainer';
-import { compressImage, compressImageFile } from '../utils/imageUtils';
 import {
   Typography, Box, Card, CardContent,
-  Button, Avatar, Paper, IconButton, Rating, Divider,
+  Button, Avatar, Paper, IconButton, Rating,
   CircularProgress, Snackbar, Alert, TextField, InputAdornment,
   Chip, Dialog, DialogContent, DialogTitle, useTheme,
   Fade, Zoom, alpha, Tooltip
