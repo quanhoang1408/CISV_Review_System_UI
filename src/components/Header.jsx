@@ -1,4 +1,3 @@
-// src/components/Header.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -25,7 +24,8 @@ import {
   Menu as MenuIcon,
   Home as HomeIcon,
   Assessment,
-  AdminPanelSettings
+  AdminPanelSettings,
+  Search as SearchIcon
 } from '@mui/icons-material';
 
 const Header = ({ title, showLogout = true }) => {
@@ -33,53 +33,35 @@ const Header = ({ title, showLogout = true }) => {
   const location = useLocation();
   const currentPath = location.pathname;
   const [adminName, setAdminName] = useState('');
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-
-  // Menu state
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 
-  // Only show nav tabs on main application pages (not admin selection)
   const showNavigation = !currentPath.includes('/admin-selection');
 
-  // Set the active tab based on current path
   const getTabValue = () => {
     if (currentPath.includes('/checkin')) return 0;
     if (currentPath.includes('/evaluation')) return 1;
-    if (currentPath.includes('/admin-management')) {
-      return isSuperAdmin ? 2 : false;
-    }
-    return false; // No tab active if on another page
+    if (currentPath.includes('/participant-search')) return isSuperAdmin ? 2 : false;
+    if (currentPath.includes('/admin-management')) return isSuperAdmin ? 3 : false;
+    return false;
   };
 
-  // Kiểm tra xem người dùng hiện tại có phải là superadmin không
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-
   useEffect(() => {
-    if (showLogout) {
-      try {
-        const adminData = JSON.parse(localStorage.getItem('currentAdmin'));
-        if (adminData) {
-          setIsSuperAdmin(adminData.isSuperAdmin || adminData.name === 'Quân Hoàng');
-        }
-      } catch (error) {
-        console.error('Error checking admin status:', error);
-      }
+    if (!showLogout) {
+      return;
     }
-  }, [showLogout]);
 
-  // Load admin name from localStorage
-  useEffect(() => {
-    if (showLogout) {
-      try {
-        const adminData = JSON.parse(localStorage.getItem('currentAdmin'));
-        if (adminData && adminData.name) {
-          setAdminName(adminData.name);
-        }
-      } catch (error) {
-        console.error('Error loading admin data:', error);
+    try {
+      const adminData = JSON.parse(localStorage.getItem('currentAdmin'));
+      if (adminData) {
+        setAdminName(adminData.name || '');
+        setIsSuperAdmin(adminData.isSuperAdmin || adminData.name === 'Quân Hoàng');
       }
+    } catch (error) {
+      console.error('Error loading admin data:', error);
     }
   }, [showLogout]);
 
@@ -106,7 +88,6 @@ const Header = ({ title, showLogout = true }) => {
     <AppBar position="fixed" elevation={3}>
       <Container maxWidth="xl">
         <Toolbar disableGutters>
-          {/* Logo/Brand - could be replaced with an actual logo */}
           <Box
             sx={{
               display: 'flex',
@@ -131,7 +112,6 @@ const Header = ({ title, showLogout = true }) => {
             </Typography>
           </Box>
 
-          {/* Desktop Navigation */}
           {showNavigation && !isMobile && (
             <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center' }}>
               <Tabs
@@ -170,6 +150,14 @@ const Header = ({ title, showLogout = true }) => {
                 />
                 {isSuperAdmin && (
                   <Tab
+                    label="Tìm kiếm"
+                    onClick={() => navigate('/participant-search')}
+                    icon={<SearchIcon sx={{ mb: 0.5, fontSize: '1.2rem' }} />}
+                    iconPosition="start"
+                  />
+                )}
+                {isSuperAdmin && (
+                  <Tab
                     label="Quản lý"
                     onClick={() => navigate('/admin-management')}
                     icon={<AdminPanelSettings sx={{ mb: 0.5, fontSize: '1.2rem' }} />}
@@ -180,7 +168,6 @@ const Header = ({ title, showLogout = true }) => {
             </Box>
           )}
 
-          {/* Desktop User Greeting */}
           <Box sx={{ flexGrow: isMobile ? 1 : 0, display: 'flex', alignItems: 'center' }}>
             {adminName && !isMobile && (
               <Tooltip title={`Đăng nhập với tên ${adminName}`}>
@@ -212,7 +199,6 @@ const Header = ({ title, showLogout = true }) => {
               </Tooltip>
             )}
 
-            {/* Desktop Logout Button */}
             {showLogout && !isMobile && (
               <Button
                 color="inherit"
@@ -232,7 +218,6 @@ const Header = ({ title, showLogout = true }) => {
             )}
           </Box>
 
-          {/* Mobile Menu Button */}
           {isMobile && showNavigation && (
             <IconButton
               color="inherit"
@@ -250,7 +235,6 @@ const Header = ({ title, showLogout = true }) => {
             </IconButton>
           )}
 
-          {/* Mobile Menu */}
           <Menu
             id="mobile-menu"
             anchorEl={anchorEl}
@@ -267,15 +251,16 @@ const Header = ({ title, showLogout = true }) => {
             transformOrigin={{ horizontal: 'right', vertical: 'top' }}
             anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
           >
-            {/* User Info in Mobile Menu */}
             {adminName && (
-              <Box sx={{
-                px: 2,
-                py: 1.5,
-                display: 'flex',
-                alignItems: 'center',
-                backgroundColor: 'rgba(25, 118, 210, 0.05)',
-              }}>
+              <Box
+                sx={{
+                  px: 2,
+                  py: 1.5,
+                  display: 'flex',
+                  alignItems: 'center',
+                  backgroundColor: 'rgba(25, 118, 210, 0.05)',
+                }}
+              >
                 <Avatar
                   sx={{
                     mr: 1.5,
@@ -297,7 +282,6 @@ const Header = ({ title, showLogout = true }) => {
               </Box>
             )}
 
-            {/* Navigation Items */}
             {showNavigation && <Divider sx={{ my: 1 }} />}
 
             {showNavigation && (
@@ -344,6 +328,27 @@ const Header = ({ title, showLogout = true }) => {
 
             {showNavigation && isSuperAdmin && (
               <MenuItem
+                onClick={() => handleNavigate('/participant-search')}
+                selected={currentPath.includes('/participant-search')}
+                sx={{
+                  py: 1.5,
+                  borderRadius: 1,
+                  mx: 0.5,
+                  '&.Mui-selected': {
+                    backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                    '&:hover': {
+                      backgroundColor: 'rgba(25, 118, 210, 0.15)',
+                    }
+                  }
+                }}
+              >
+                <SearchIcon sx={{ mr: 2, color: 'primary.main' }} />
+                Tìm kiếm
+              </MenuItem>
+            )}
+
+            {showNavigation && isSuperAdmin && (
+              <MenuItem
                 onClick={() => handleNavigate('/admin-management')}
                 selected={currentPath.includes('/admin-management')}
                 sx={{
@@ -363,9 +368,6 @@ const Header = ({ title, showLogout = true }) => {
               </MenuItem>
             )}
 
-
-
-            {/* Logout Item */}
             {showLogout && <Divider sx={{ my: 1 }} />}
 
             {showLogout && (

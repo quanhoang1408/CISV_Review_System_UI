@@ -9,6 +9,7 @@ import AdminSelection from './pages/AdminSelection';
 import CheckInPage from './pages/CheckInPage';
 import EvaluationPage from './pages/EvaluationPage';
 import AdminManagementPage from './pages/AdminManagementPage';
+import SearchEnginePage from './pages/SearchEnginePage';
 
 // Components
 import AuthWrapper from './components/AuthWrapper';
@@ -214,6 +215,14 @@ function App() {
             element={
               <AuthWrapper>
                 <EvaluationPage />
+              </AuthWrapper>
+            }
+          />
+          <Route
+            path="/participant-search"
+            element={
+              <AuthWrapper requireSuperAdmin={true}>
+                <SearchEnginePage />
               </AuthWrapper>
             }
           />

@@ -34,7 +34,10 @@ const AdminManagementPage = () => {
   const [participantFormData, setParticipantFormData] = useState({
     name: '',
     namesText: '',
-    type: 'supporter'
+    type: 'supporter',
+    dateOfBirth: '',
+    email: '',
+    facebookLink: ''
   });
   const [participantBulkResult, setParticipantBulkResult] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -187,14 +190,20 @@ const AdminManagementPage = () => {
       setParticipantFormData({
         name: participant.name,
         namesText: '',
-        type: participant.type || 'supporter'
+        type: participant.type || 'supporter',
+        dateOfBirth: participant.dateOfBirth || '',
+        email: participant.email || '',
+        facebookLink: participant.facebookLink || ''
       });
     } else {
       setCurrentParticipant(null);
       setParticipantFormData({
         name: '',
         namesText: '',
-        type: 'supporter'
+        type: 'supporter',
+        dateOfBirth: '',
+        email: '',
+        facebookLink: ''
       });
     }
     setParticipantBulkResult(null);
@@ -232,7 +241,10 @@ const AdminManagementPage = () => {
           `${process.env.REACT_APP_API_URL}/api/participants`,
           {
             namesText: participantFormData.namesText,
-            type: participantFormData.type
+            type: participantFormData.type,
+            dateOfBirth: participantFormData.dateOfBirth,
+            email: participantFormData.email,
+            facebookLink: participantFormData.facebookLink
           }
         );
         setParticipantBulkResult(response.data);
@@ -578,18 +590,11 @@ const AdminManagementPage = () => {
               <TextField
                 fullWidth
                 margin="normal"
-                label={currentParticipant ? 'Cap nhat' : 'Them danh sach'}
-                name={currentParticipant ? 'name' : 'namesText'}
-                value={currentParticipant ? participantFormData.name : participantFormData.namesText}
-                onChange={handleParticipantInputChange}
+                label="Tên"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
                 required
-                multiline={!currentParticipant}
-                minRows={currentParticipant ? 1 : 8}
-                helperText={
-                  currentParticipant
-                    ? ''
-                    : 'Moi dong la mot nguoi. Ten trung trong danh sach hoac da co san se bi bo qua.'
-                }
               />
               <FormControl fullWidth margin="normal">
                 <InputLabel>Vai trò</InputLabel>
@@ -685,14 +690,14 @@ const AdminManagementPage = () => {
           }}
         >
           <DialogTitle>
-            {currentParticipant ? 'Cap nhat nguoi tham gia' : 'Them danh sach nguoi tham gia'}
+            {currentParticipant ? 'Cập nhật người tham gia' : 'Thêm danh sách người tham gia'}
           </DialogTitle>
           <DialogContent>
             <Box sx={{ pt: 1 }}>
               <TextField
                 fullWidth
                 margin="normal"
-                label={currentParticipant ? 'Ten' : 'Danh sach ten'}
+                label={currentParticipant ? 'Ten' : 'Danh sách tên'}
                 name={currentParticipant ? 'name' : 'namesText'}
                 value={currentParticipant ? participantFormData.name : participantFormData.namesText}
                 onChange={handleParticipantInputChange}
@@ -702,7 +707,7 @@ const AdminManagementPage = () => {
                 helperText={
                   currentParticipant
                     ? ''
-                    : 'Moi dong la mot nguoi. Ten trung trong danh sach hoac da co san se bi bo qua.'
+                    : 'Mỗi dòng là một người. Tên đã có sẽ bị bỏ qua'
                 }
               />
               <FormControl fullWidth margin="normal">
@@ -717,6 +722,33 @@ const AdminManagementPage = () => {
                   <MenuItem value="leader">Leader</MenuItem>
                 </Select>
               </FormControl>
+              <TextField
+                fullWidth
+                margin="normal"
+                label="Ng??y sinh"
+                name="dateOfBirth"
+                type="date"
+                value={participantFormData.dateOfBirth}
+                onChange={handleParticipantInputChange}
+                InputLabelProps={{ shrink: true }}
+              />
+              <TextField
+                fullWidth
+                margin="normal"
+                label="Email"
+                name="email"
+                type="email"
+                value={participantFormData.email}
+                onChange={handleParticipantInputChange}
+              />
+              <TextField
+                fullWidth
+                margin="normal"
+                label="Link Facebook"
+                name="facebookLink"
+                value={participantFormData.facebookLink}
+                onChange={handleParticipantInputChange}
+              />
               {!currentParticipant && participantBulkResult && (
                 <Box sx={{ mt: 2 }}>
                   <Alert severity="success" sx={{ mb: 2 }}>
@@ -724,7 +756,7 @@ const AdminManagementPage = () => {
                   </Alert>
                   <Box sx={{ mb: 2 }}>
                     <Typography variant="subtitle2" fontWeight={600} color="success.main" sx={{ mb: 1 }}>
-                      Them thanh cong
+                      Thêm thành công
                     </Typography>
                     {participantBulkResult.createdParticipants?.length > 0 ? (
                       participantBulkResult.createdParticipants.map((participant) => (
@@ -734,13 +766,13 @@ const AdminManagementPage = () => {
                       ))
                     ) : (
                       <Typography variant="body2" color="text.secondary">
-                        Khong co ai duoc them.
+                        Không có ai được thêm
                       </Typography>
                     )}
                   </Box>
                   <Box>
                     <Typography variant="subtitle2" fontWeight={600} color="error.main" sx={{ mb: 1 }}>
-                      Khong them duoc
+                      Không thêm được
                     </Typography>
                     {participantBulkResult.skippedParticipants?.length > 0 ? (
                       participantBulkResult.skippedParticipants.map((participant, index) => (
