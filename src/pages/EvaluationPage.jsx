@@ -16,6 +16,8 @@ import {
   CheckCircleOutline, HourglassEmpty, Delete
 } from '@mui/icons-material';
 
+const activeParticipantLabel = (process.env.REACT_APP_ACTIVE_PARTICIPANT_LABEL || '').trim();
+
 const EvaluationPage = () => {
   const [participants, setParticipants] = useState([]);
   const [selectedParticipant, setSelectedParticipant] = useState(null);
@@ -27,7 +29,6 @@ const EvaluationPage = () => {
   const [imageDialog, setImageDialog] = useState({ open: false, imageUrl: '', name: '' });
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, evaluationId: null });
-  const [updatingSheet, setUpdatingSheet] = useState(false);
   // Sử dụng ref thay vì state để lưu vị trí cuộn và trạng thái trước đó
   const scrollPositionRef = useRef(0);
   const prevSelectedParticipantRef = useRef(null);
@@ -115,8 +116,17 @@ const EvaluationPage = () => {
     setSearchQuery(event.target.value);
   };
 
+  const visibleParticipants = participants.filter((participant) => {
+    if (!activeParticipantLabel) {
+      return true;
+    }
+
+    return Array.isArray(participant.labels)
+      && participant.labels.some((label) => label === activeParticipantLabel);
+  });
+
   // Lọc danh sách người tham gia theo tìm kiếm
-  const filteredParticipants = participants.filter(participant =>
+  const filteredParticipants = visibleParticipants.filter(participant =>
     participant.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -231,25 +241,6 @@ const EvaluationPage = () => {
     } finally {
       setLoading(false);
       handleCloseDeleteDialog();
-    }
-  };
-
-  // Xử lý cập nhật sheet đánh giá
-  const handleUpdateEvaluationSheet = async () => {
-    setUpdatingSheet(true);
-    try {
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/sheets/update-evaluation`);
-
-      if (response.data.success) {
-        showSnackbar('Đã cập nhật sheet đánh giá thành công', 'success');
-      } else {
-        showSnackbar('Có lỗi xảy ra khi cập nhật sheet đánh giá', 'error');
-      }
-    } catch (error) {
-      console.error('Error updating evaluation sheet:', error);
-      showSnackbar('Có lỗi xảy ra khi cập nhật sheet đánh giá', 'error');
-    } finally {
-      setUpdatingSheet(false);
     }
   };
 
@@ -725,7 +716,7 @@ const EvaluationPage = () => {
             </Fade>
           ) : !loading && participants.length > 0 ? (
             <>
-              {/* Thêm nút cập nhật sheet đánh giá và ô tìm kiếm */}
+              {/* Ô tìm kiếm */}
               <Box sx={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -733,26 +724,6 @@ const EvaluationPage = () => {
                 gap: 2,
                 mb: 4
               }}>
-                {/* Nút cập nhật sheet đánh giá chỉ hiển thị cho super admin */}
-                {isSuperAdmin && (
-                  <Button
-                    variant="contained"
-                    color="success"
-                    onClick={handleUpdateEvaluationSheet}
-                    disabled={updatingSheet}
-                    startIcon={updatingSheet ? <CircularProgress size={20} color="inherit" /> : null}
-                    sx={{
-                      borderRadius: 2,
-                      whiteSpace: 'nowrap',
-                      px: 3,
-                      py: 1,
-                      mb: 2
-                    }}
-                  >
-                    {updatingSheet ? 'Đang cập nhật...' : 'Cập nhật Sheet Đánh giá'}
-                  </Button>
-                )}
-
                 <Box
                   sx={{
                     position: 'relative',

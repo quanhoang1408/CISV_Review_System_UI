@@ -21,6 +21,7 @@ const AdminManagementPage = () => {
   const [loading, setLoading] = useState(true);
   const [userDialogOpen, setUserDialogOpen] = useState(false);
   const [participantDialogOpen, setParticipantDialogOpen] = useState(false);
+  const [participantLabelDialogOpen, setParticipantLabelDialogOpen] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
   const [currentUser, setCurrentUser] = useState(null);
@@ -37,9 +38,15 @@ const AdminManagementPage = () => {
     type: 'supporter',
     dateOfBirth: '',
     email: '',
-    facebookLink: ''
+    facebookLink: '',
+    labelsText: ''
   });
   const [participantBulkResult, setParticipantBulkResult] = useState(null);
+  const [participantLabelFormData, setParticipantLabelFormData] = useState({
+    label: '',
+    namesText: ''
+  });
+  const [participantLabelBulkResult, setParticipantLabelBulkResult] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteType, setDeleteType] = useState('');
   const [currentAdmin, setCurrentAdmin] = useState(null);
@@ -193,7 +200,8 @@ const AdminManagementPage = () => {
         type: participant.type || 'supporter',
         dateOfBirth: participant.dateOfBirth || '',
         email: participant.email || '',
-        facebookLink: participant.facebookLink || ''
+        facebookLink: participant.facebookLink || '',
+        labelsText: Array.isArray(participant.labels) ? participant.labels.join(', ') : ''
       });
     } else {
       setCurrentParticipant(null);
@@ -203,7 +211,8 @@ const AdminManagementPage = () => {
         type: 'supporter',
         dateOfBirth: '',
         email: '',
-        facebookLink: ''
+        facebookLink: '',
+        labelsText: ''
       });
     }
     setParticipantBulkResult(null);
@@ -216,11 +225,33 @@ const AdminManagementPage = () => {
     setParticipantBulkResult(null);
   };
 
+  const handleOpenParticipantLabelDialog = () => {
+    setParticipantLabelFormData({
+      label: '',
+      namesText: ''
+    });
+    setParticipantLabelBulkResult(null);
+    setParticipantLabelDialogOpen(true);
+  };
+
+  const handleCloseParticipantLabelDialog = () => {
+    setParticipantLabelDialogOpen(false);
+    setParticipantLabelBulkResult(null);
+  };
+
   // Hàm xử lý thay đổi input trong form participant
   const handleParticipantInputChange = (e) => {
     const { name, value } = e.target;
     setParticipantFormData({
       ...participantFormData,
+      [name]: value
+    });
+  };
+
+  const handleParticipantLabelInputChange = (e) => {
+    const { name, value } = e.target;
+    setParticipantLabelFormData({
+      ...participantLabelFormData,
       [name]: value
     });
   };
@@ -244,7 +275,8 @@ const AdminManagementPage = () => {
             type: participantFormData.type,
             dateOfBirth: participantFormData.dateOfBirth,
             email: participantFormData.email,
-            facebookLink: participantFormData.facebookLink
+            facebookLink: participantFormData.facebookLink,
+            labelsText: participantFormData.labelsText
           }
         );
         setParticipantBulkResult(response.data);
@@ -254,6 +286,25 @@ const AdminManagementPage = () => {
     } catch (error) {
       console.error('Error saving participant:', error);
       showSnackbar('Co loi xay ra khi luu nguoi tham gia', 'error');
+    }
+  };
+
+  const handleSubmitParticipantLabelAction = async () => {
+    try {
+      const response = await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/participants/bulk-labels`,
+        {
+          label: participantLabelFormData.label,
+          namesText: participantLabelFormData.namesText
+        }
+      );
+
+      setParticipantLabelBulkResult(response.data);
+      showSnackbar(response.data.message || 'Da xu ly cap nhat labels', 'success');
+      await fetchData();
+    } catch (error) {
+      console.error('Error updating participant labels:', error);
+      showSnackbar('Co loi xay ra khi cap nhat labels', 'error');
     }
   };
 
@@ -452,6 +503,14 @@ const AdminManagementPage = () => {
                     sx={{ borderRadius: 8, mr: 1 }}
                   >
                     Làm mới
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    color="secondary"
+                    onClick={handleOpenParticipantLabelDialog}
+                    sx={{ borderRadius: 8, mr: 1 }}
+                  >
+                    C?p nh?t labels
                   </Button>
                   <Button
                     variant="contained"
@@ -749,6 +808,15 @@ const AdminManagementPage = () => {
                 value={participantFormData.facebookLink}
                 onChange={handleParticipantInputChange}
               />
+              <TextField
+                fullWidth
+                margin="normal"
+                label="Labels"
+                name="labelsText"
+                value={participantFormData.labelsText}
+                onChange={handleParticipantInputChange}
+                helperText="Ngăn cách nhiều label bằng dấu phẩy. Ví dụ: Spring Camp 2026, Summer Camp 2025"
+              />
               {!currentParticipant && participantBulkResult && (
                 <Box sx={{ mt: 2 }}>
                   <Alert severity="success" sx={{ mb: 2 }}>
@@ -799,6 +867,97 @@ const AdminManagementPage = () => {
               color="secondary"
             >
               {currentParticipant ? 'Cap nhat' : 'Them danh sach'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={participantLabelDialogOpen}
+          onClose={handleCloseParticipantLabelDialog}
+          PaperProps={{
+            sx: {
+              borderRadius: 3,
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+              maxWidth: 500,
+              width: '100%'
+            }
+          }}
+        >
+          <DialogTitle>C?p nh?t labels cho ng??i tham gia</DialogTitle>
+          <DialogContent>
+            <Box sx={{ pt: 1 }}>
+              <TextField
+                fullWidth
+                margin="normal"
+                label="Label"
+                name="label"
+                value={participantLabelFormData.label}
+                onChange={handleParticipantLabelInputChange}
+                required
+                helperText="V? d?: Spring Camp 2026"
+              />
+              <TextField
+                fullWidth
+                margin="normal"
+                label="Danh s?ch t?n"
+                name="namesText"
+                value={participantLabelFormData.namesText}
+                onChange={handleParticipantLabelInputChange}
+                required
+                multiline
+                minRows={8}
+                helperText="M?i d?ng l? m?t ng??i. H? th?ng s? th?m label n?y cho nh?ng ai t?m th?y trong danh s?ch participant."
+              />
+              {participantLabelBulkResult && (
+                <Box sx={{ mt: 2 }}>
+                  <Alert severity="success" sx={{ mb: 2 }}>
+                    {participantLabelBulkResult.message}
+                  </Alert>
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="subtitle2" fontWeight={600} color="success.main" sx={{ mb: 1 }}>
+                      C?p nh?t th?nh c?ng
+                    </Typography>
+                    {participantLabelBulkResult.updatedParticipants?.length > 0 ? (
+                      participantLabelBulkResult.updatedParticipants.map((participant) => (
+                        <Typography key={participant._id} variant="body2" sx={{ mb: 0.5 }}>
+                          - {participant.name}
+                        </Typography>
+                      ))
+                    ) : (
+                      <Typography variant="body2" color="text.secondary">
+                        Kh?ng c? ai ???c c?p nh?t
+                      </Typography>
+                    )}
+                  </Box>
+                  <Box>
+                    <Typography variant="subtitle2" fontWeight={600} color="error.main" sx={{ mb: 1 }}>
+                      Kh?ng c?p nh?t ???c
+                    </Typography>
+                    {participantLabelBulkResult.skippedParticipants?.length > 0 ? (
+                      participantLabelBulkResult.skippedParticipants.map((participant, index) => (
+                        <Typography key={`${participant.name}-${index}`} variant="body2" sx={{ mb: 0.5 }}>
+                          - {participant.name}: {participant.reason}
+                        </Typography>
+                      ))
+                    ) : (
+                      <Typography variant="body2" color="text.secondary">
+                        Kh?ng c? t?n n?o b? b? qua.
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
+              )}
+            </Box>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2 }}>
+            <Button onClick={handleCloseParticipantLabelDialog}>H?y</Button>
+            <Button
+              variant="contained"
+              onClick={handleSubmitParticipantLabelAction}
+              disabled={!participantLabelFormData.label.trim() || !participantLabelFormData.namesText.trim()}
+              color="secondary"
+            >
+              C?p nh?t labels
             </Button>
           </DialogActions>
         </Dialog>

@@ -55,7 +55,8 @@ const SearchEnginePage = () => {
         participant.dateOfBirth,
         participant.email,
         participant.facebookLink,
-        participant.checkedInBy?.name
+        participant.checkedInBy?.name,
+        Array.isArray(participant.labels) ? participant.labels.join(' ') : ''
       ];
 
       return values.some((value) => (value || '').toLowerCase().includes(keyword));
@@ -121,6 +122,7 @@ const SearchEnginePage = () => {
                       <TableCell>Ngày sinh</TableCell>
                       <TableCell>Email</TableCell>
                       <TableCell>Facebook</TableCell>
+                      <TableCell>Labels</TableCell>
                       <TableCell>Check-in</TableCell>
                       <TableCell>Người check-in</TableCell>
                     </TableRow>
@@ -149,6 +151,9 @@ const SearchEnginePage = () => {
                           )}
                         </TableCell>
                         <TableCell>
+                          {participant.labels?.length > 0 ? participant.labels.join(', ') : '-'}
+                        </TableCell>
+                        <TableCell>
                           <Chip
                             size="small"
                             label={participant.checkInStatus ? 'Đã check-in' : 'Chưa check-in'}
@@ -160,7 +165,7 @@ const SearchEnginePage = () => {
                     ))}
                     {filteredParticipants.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                        <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
                           Không có participant nào khớp với từ khóa tìm kiếm.
                         </TableCell>
                       </TableRow>
