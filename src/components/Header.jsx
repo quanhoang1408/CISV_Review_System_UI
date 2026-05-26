@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   AppBar,
@@ -17,7 +18,15 @@ import {
   useTheme,
   Avatar,
   Container,
-  Tooltip
+  Tooltip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Snackbar,
+  Alert,
+  CircularProgress,
+  TextField
 } from '@mui/material';
 import {
   Logout,
@@ -34,6 +43,12 @@ const Header = ({ title, showLogout = true }) => {
   const currentPath = location.pathname;
   const [adminName, setAdminName] = useState('');
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [changePinDialogOpen, setChangePinDialogOpen] = useState(false);
+  const [oldPinDigits, setOldPinDigits] = useState(['', '', '', '']);
+  const [newPinDigits, setNewPinDigits] = useState(['', '', '', '']);
+  const [pinError, setPinError] = useState('');
+  const [pinLoading, setPinLoading] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [anchorEl, setAnchorEl] = useState(null);
@@ -69,6 +84,88 @@ const Header = ({ title, showLogout = true }) => {
     localStorage.removeItem('currentAdmin');
     navigate('/');
     handleMenuClose();
+  };
+
+  const handleOpenChangePinDialog = () => {
+    setChangePinDialogOpen(true);
+    handleMenuClose();
+  };
+
+  const handleCloseChangePinDialog = () => {
+    setChangePinDialogOpen(false);
+    setOldPinDigits(['', '', '', '']);
+    setNewPinDigits(['', '', '', '']);
+    setPinError('');
+    setPinLoading(false);
+  };
+
+  const handlePinDigitChange = (digits, setDigits, index, value) => {
+    if (value !== '' && !/^\d$/.test(value)) {
+      return;
+    }
+
+    const newDigits = [...digits];
+    newDigits[index] = value;
+    setDigits(newDigits);
+
+    if (value !== '' && index < 3) {
+      const nextInput = document.getElementById(`pin-digit-${setDigits === setOldPinDigits ? 'old' : 'new'}-${index + 1}`);
+      if (nextInput) {
+        nextInput.focus();
+      }
+    }
+  };
+
+  const handlePinKeyDown = (digits, index, e) => {
+    if (e.key === 'Backspace' && index > 0 && digits[index] === '') {
+      const prevInput = document.getElementById(`pin-digit-${digits === oldPinDigits ? 'old' : 'new'}-${index - 1}`);
+      if (prevInput) {
+        prevInput.focus();
+      }
+    }
+  };
+
+  const showSnackbar = (message, severity = 'success') => {
+    setSnackbar({ open: true, message, severity });
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
+
+  const handleChangePinSubmit = async () => {
+    const currentAdmin = JSON.parse(localStorage.getItem('currentAdmin'));
+    if (!currentAdmin) {
+      setPinError('Không tìm thấy thông tin quản trị viên. Vui lòng đăng nhập lại.');
+      return;
+    }
+
+    if (oldPinDigits.some(digit => digit === '') || newPinDigits.some(digit => digit === '')) {
+      setPinError('Vui lòng nhập đủ 4 chữ số cho cả PIN cũ và PIN mới');
+      return;
+    }
+
+    const oldPassword = oldPinDigits.join('');
+    const newPassword = newPinDigits.join('');
+
+    if (oldPassword === newPassword) {
+      setPinError('Mã PIN mới phải khác mã PIN cũ');
+      return;
+    }
+
+    try {
+      setPinLoading(true);
+      await axios.put(`${process.env.REACT_APP_API_URL}/api/users/${currentAdmin._id}/change-password`, {
+        oldPassword,
+        newPassword
+      });
+      showSnackbar('Đổi mã PIN thành công', 'success');
+      handleCloseChangePinDialog();
+    } catch (error) {
+      const message = error?.response?.data?.message;
+      setPinError(message || 'Đổi mã PIN thất bại. Vui lòng thử lại.');
+      setPinLoading(false);
+    }
   };
 
   const handleMenuOpen = (event) => {
@@ -197,6 +294,24 @@ const Header = ({ title, showLogout = true }) => {
                   }}
                 />
               </Tooltip>
+            )}
+
+            {adminName && !isMobile && (
+              <Button
+                color="inherit"
+                variant="outlined"
+                onClick={handleOpenChangePinDialog}
+                sx={{
+                  borderColor: 'rgba(255,255,255,0.3)',
+                  mr: 2,
+                  '&:hover': {
+                    borderColor: 'rgba(255,255,255,0.6)',
+                    backgroundColor: 'rgba(255,255,255,0.1)',
+                  }
+                }}
+              >
+                Đổi PIN
+              </Button>
             )}
 
             {showLogout && !isMobile && (
@@ -368,6 +483,23 @@ const Header = ({ title, showLogout = true }) => {
               </MenuItem>
             )}
 
+            {showNavigation && (
+              <MenuItem
+                onClick={handleOpenChangePinDialog}
+                sx={{
+                  py: 1.5,
+                  borderRadius: 1,
+                  mx: 0.5,
+                  '&:hover': {
+                    backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                  }
+                }}
+              >
+                <AdminPanelSettings sx={{ mr: 2, color: 'primary.main' }} />
+                Đổi PIN
+              </MenuItem>
+            )}
+
             {showLogout && <Divider sx={{ my: 1 }} />}
 
             {showLogout && (
@@ -388,6 +520,90 @@ const Header = ({ title, showLogout = true }) => {
               </MenuItem>
             )}
           </Menu>
+
+          <Dialog
+            open={changePinDialogOpen}
+            onClose={handleCloseChangePinDialog}
+            PaperProps={{ sx: { borderRadius: 3 } }}
+          >
+            <DialogTitle>Đổi mã PIN</DialogTitle>
+            <DialogContent>
+              <Typography variant="body2" sx={{ mb: 2 }}>
+                Nhập mã PIN cũ và mã PIN mới gồm 4 chữ số.
+              </Typography>
+              {pinError && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                  {pinError}
+                </Alert>
+              )}
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                Mã PIN cũ
+              </Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, mb: 3 }}>
+                {[0, 1, 2, 3].map((index) => (
+                  <TextField
+                    key={`old-${index}`}
+                    id={`pin-digit-old-${index}`}
+                    inputProps={{
+                      maxLength: 1,
+                      style: { textAlign: 'center', fontSize: '1.4rem', padding: '12px 0' }
+                    }}
+                    variant="outlined"
+                    value={oldPinDigits[index]}
+                    onChange={(e) => handlePinDigitChange(oldPinDigits, setOldPinDigits, index, e.target.value)}
+                    onKeyDown={(e) => handlePinKeyDown(oldPinDigits, index, e)}
+                    type="tel"
+                    sx={{ width: 60 }}
+                  />
+                ))}
+              </Box>
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                Mã PIN mới
+              </Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, mb: 1 }}>
+                {[0, 1, 2, 3].map((index) => (
+                  <TextField
+                    key={`new-${index}`}
+                    id={`pin-digit-new-${index}`}
+                    inputProps={{
+                      maxLength: 1,
+                      style: { textAlign: 'center', fontSize: '1.4rem', padding: '12px 0' }
+                    }}
+                    variant="outlined"
+                    value={newPinDigits[index]}
+                    onChange={(e) => handlePinDigitChange(newPinDigits, setNewPinDigits, index, e.target.value)}
+                    onKeyDown={(e) => handlePinKeyDown(newPinDigits, index, e)}
+                    type="tel"
+                    sx={{ width: 60 }}
+                  />
+                ))}
+              </Box>
+            </DialogContent>
+            <DialogActions sx={{ px: 3, pb: 3, justifyContent: 'space-between' }}>
+              <Button onClick={handleCloseChangePinDialog} variant="outlined" sx={{ borderRadius: 8, px: 3 }}>
+                Hủy
+              </Button>
+              <Button
+                onClick={handleChangePinSubmit}
+                variant="contained"
+                disabled={pinLoading || oldPinDigits.some(digit => digit === '') || newPinDigits.some(digit => digit === '')}
+                sx={{ borderRadius: 8, px: 3, position: 'relative' }}
+              >
+                {pinLoading ? <CircularProgress size={24} sx={{ color: 'white', position: 'absolute' }} /> : 'Lưu PIN'}
+              </Button>
+            </DialogActions>
+          </Dialog>
+
+          <Snackbar
+            open={snackbar.open}
+            autoHideDuration={3000}
+            onClose={handleSnackbarClose}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          >
+            <Alert onClose={handleSnackbarClose} severity={snackbar.severity} sx={{ width: '100%' }}>
+              {snackbar.message}
+            </Alert>
+          </Snackbar>
         </Toolbar>
       </Container>
     </AppBar>

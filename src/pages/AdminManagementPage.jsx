@@ -670,12 +670,12 @@ const AdminManagementPage = () => {
               <TextField
                 fullWidth
                 margin="normal"
-                label="Mật khẩu"
+                label="Mã PIN"
                 name="password"
                 type="password"
                 value={formData.password}
                 onChange={handleInputChange}
-                helperText={currentUser ? "Để trống nếu không muốn thay đổi mật khẩu" : ""}
+                helperText={currentUser ? "Để trống nếu không muốn thay đổi mã PIN" : "Nhập mã PIN 4 chữ số"}
               />
               <FormControlLabel
                 control={

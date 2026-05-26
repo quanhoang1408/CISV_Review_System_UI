@@ -46,14 +46,7 @@ const AdminSelection = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (selectedAdmin) {
-      const admin = admins.find(admin => admin._id === selectedAdmin);
-
-      // Kiểm tra nếu là admin Quân Hoàng (superadmin)
-      if (admin.name === 'Quân Hoàng' || admin.isSuperAdmin) {
-        setShowPasswordDialog(true);
-      } else {
-        handleLogin(admin);
-      }
+      setShowPasswordDialog(true);
     }
   };
 
@@ -74,37 +67,6 @@ const AdminSelection = () => {
     try {
       setLoading(true);
 
-      // Kiểm tra nếu là Quân Hoàng và mật khẩu là 1408
-      if (admin.name === 'Quân Hoàng') {
-        // Đối với Quân Hoàng, luôn kiểm tra mật khẩu cứng
-        if (password === '1408') {
-          console.log('Đăng nhập thành công với Quân Hoàng');
-
-          // Tạo thông tin admin với quyền superadmin
-          const adminData = {
-            _id: admin._id,
-            name: admin.name,
-            role: 'superadmin',
-            isSuperAdmin: true
-          };
-
-          // Lưu thông tin admin đã xác thực
-          localStorage.setItem('currentAdmin', JSON.stringify(adminData));
-
-          // Chuyển hướng đến trang chính
-          setTimeout(() => {
-            navigate('/checkin');
-          }, 800);
-        } else {
-          // Mật khẩu không đúng
-          console.error('Mật khẩu không đúng cho Quân Hoàng');
-          setPasswordError('Mật khẩu không đúng. Vui lòng thử lại.');
-          setLoading(false);
-        }
-        return;
-      }
-
-      // Nếu không phải Quân Hoàng, gọi API xác thực
       const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/users/auth`, {
         name: admin.name,
         password: password
@@ -119,7 +81,8 @@ const AdminSelection = () => {
       }, 800);
     } catch (error) {
       console.error('Authentication error:', error);
-      setPasswordError('Mật khẩu không đúng. Vui lòng thử lại.');
+      const message = error?.response?.data?.message;
+      setPasswordError(message || 'Mã PIN không đúng. Vui lòng thử lại.');
       setLoading(false);
     }
   };
