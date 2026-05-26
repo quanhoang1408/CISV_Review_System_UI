@@ -119,17 +119,6 @@ const AdminSelection = () => {
       }
     }
   };
-
-  const handleLogin = (admin) => {
-    setLoading(true);
-    localStorage.setItem('currentAdmin', JSON.stringify(admin));
-
-    // Thêm timeout nhỏ để hiển thị hiệu ứng loading
-    setTimeout(() => {
-      navigate('/checkin');
-    }, 800);
-  };
-
   const handleClosePasswordDialog = () => {
     setShowPasswordDialog(false);
     setPasswordDigits(['', '', '', '']);
